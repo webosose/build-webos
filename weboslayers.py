@@ -58,11 +58,12 @@ Machines = ['raspberrypi3','qemux86']
 # github.com/openembedded repositories are read-only mirrors of the authoritative
 # repositories on git.openembedded.org
 webos_layers = [
-('bitbake',                   -1, 'git://github.com/openembedded/bitbake.git',              'branch=1.32,commit=0193e1f', ''),
+('bitbake',                   -1, 'git://github.com/openembedded/bitbake.git',              'branch=1.34,commit=0d436ff', ''),
 
-('meta',                       5, 'git://github.com/openembedded/openembedded-core.git',    'branch=morty,commit=4b32784', 'oe-core'),
+('meta-gplv2',                 1, 'git://git.yoctoproject.org/meta-gplv2',                  'branch=pyro,commit=6271479', ''),
+('meta',                       5, 'git://github.com/openembedded/openembedded-core.git',    'branch=pyro,commit=819aa15', 'oe-core'),
 
-('meta-oe',                   10, 'git://github.com/openembedded/meta-openembedded.git',    'branch=morty,commit=997caf9', 'meta-oe'),
+('meta-oe',                   10, 'git://github.com/openembedded/meta-openembedded.git',    'branch=pyro,commit=9eaebc6', 'meta-oe'),
 ('meta-multimedia',           11, 'git://github.com/openembedded/meta-openembedded.git',    '', 'meta-oe'),
 ('meta-networking',           12, 'git://github.com/openembedded/meta-openembedded.git',    '', 'meta-oe'),
 ('meta-python',               13, 'git://github.com/openembedded/meta-openembedded.git',    '', 'meta-oe'),
@@ -70,15 +71,14 @@ webos_layers = [
 
 ('meta-qt5',                  20, 'git://github.com/meta-qt5/meta-qt5.git',                 'branch=krogoth,commit=dcfcb58', ''),
 
-('meta-webos-backports-2.3',  30, 'git://github.com/webosose/meta-webosose.git',            '', ''),
 ('meta-webos-backports-2.4',  31, 'git://github.com/webosose/meta-webosose.git',            '', ''),
 ('meta-webos-backports-2.5',  32, 'git://github.com/webosose/meta-webosose.git',            '', ''),
 ('meta-webos-backports-2.6',  33, 'git://github.com/webosose/meta-webosose.git',            '', ''),
 
 ('meta-ros2',                 38, 'git://github.com/lgsvl/meta-ros2.git',                   'branch=ros2pr,commit=b92ab96',''),
-('meta-webos',                40, 'git://github.com/webosose/meta-webosose.git',            'branch=master,commit=bed21c9', ''),
+('meta-webos',                40, 'git://github.com/webosose/meta-webosose.git',            'branch=master,commit=40699ed', ''),
 
-('meta-raspberrypi',          50, 'git://git.yoctoproject.org/meta-raspberrypi',            'branch=morty,commit=2a19226', ''),
+('meta-raspberrypi',          50, 'git://git.yoctoproject.org/meta-raspberrypi',            'branch=pyro,commit=6786c07', ''),
 ('meta-webos-raspberrypi',    51, 'git://github.com/webosose/meta-webosose.git',            '', ''),
 ('meta-webos-ros2',           52, 'git://github.com/webosose/meta-webosose.git',            '', ''),
 ]
