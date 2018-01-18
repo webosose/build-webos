@@ -18,7 +18,7 @@
 
 check_sanity=true
 usage="$0 [--help|-h] [--version|-V] [--force|-f]"
-version="2.2.2"
+version="2.2.3"
 statusfile="/etc/webos.prerequisites"
 
 for i ; do
@@ -62,8 +62,8 @@ fi
 sane=true
 
 distributor_id_sane="^Ubuntu$"
-release_sane="^14.04$"
-codename_sane="^trusty$"
+release_sane="^14.04$|^16.04$|^18.04$"
+codename_sane="^trusty$|^xenial$|^bionic$"
 arch_sane="^amd64$"
 
 case "${check_sanity}" in
