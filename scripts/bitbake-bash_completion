@@ -1,0 +1,59 @@
+#
+# "bitbake autocompletion description"
+#
+# LICENSE:  GNU GPLv2 or any later version
+# CREATED:  Filippo Basso <filippo@zirak.it> (12-DEC-2007)
+# ORIGIN-URL: http://lists.linuxtogo.org/pipermail/openembedded-devel/2007-December/003766.html
+# MODIFIED:
+#
+# Use:
+# - simply put it into your /etc/bash_completion.d/ directory...
+# For help enhancing this script, see also:
+# - http://www.debian-administration.org/articles/317
+# - http://www.gnu.org/software/bash/manual/bashref.html#SEC112
+#
+
+
+_bitbake()
+{
+    local cur conns prev options options1 i j A recipefile
+    COMPREPLY=()
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    options="--bind= --buildfile= --clear-stamp= --cmd= --continue --debug --dry-run --dump-signatures --environment --force --graphviz --help --ignore-deps= --log-domains= --no-setscene --parse-only --postread= --profile --read= --revisions-changed --server-only --servertype= --show-versions --tryaltconfigs --ui= --verbose --version"
+    options1="-B -C -D -I -P -R -S -a -b -c -e -f -g -h -k -l -n -p -r -s -t -u -v"
+    commands=`(cd ${TOPDIR}; make _display_conveniences)` # TOPDIR is set in oe-init-build-env
+
+    # ------- Options completion -------
+    if [[ ${prev} == "-c" ]]
+    then
+        COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+        return 0
+    fi
+
+    if [[ ${cur} == -* ]]
+    then
+        if [[ ${cur} == --* ]]
+        then
+            COMPREPLY=( $(compgen -W "${options}" -- ${cur}) )
+            return 0
+        else
+            COMPREPLY=( $(compgen -W "${options1}" -- ${cur}) )
+            return 0
+        fi
+    fi
+
+    # ------- Recipe list autocompletion -------
+    # This doesn't work when overriding META_*_LAYER settings
+    # in conf/bblayers.conf from webos-local.conf
+    # TOPDIR is set in oe-init-build-env
+
+    metapaths=`grep  '^META_.*LAYER' ${TOPDIR}/conf/bblayers.conf  | cut -f 2 -d '"' `
+    metapaths=`eval echo $metapaths|tr " " ","`
+    metapaths=`eval echo {${metapaths}}/recipes-*/*/${cur}*.bb`
+    conns=`ls -fb $metapaths 2> /dev/null | sed -e 's!/[^ ]*/!!g' -e 's!_[^ ]*!!g' -e 's!\.bb!!g'`
+    COMPREPLY=( $(compgen -W "${conns}" -- ${cur}) )
+    return 0
+}
+complete -F _bitbake bitbake

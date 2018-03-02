@@ -1,0 +1,906 @@
+#!/usr/bin/env python3
+# Copyright (c) 2008-2017 LG Electronics, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+import argparse
+import errno
+import logging
+import os
+import subprocess
+import sys
+import re
+from time import gmtime, strftime, sleep
+import shutil
+import glob
+
+__version__ = "6.2.2"
+
+logger = logging.getLogger(__name__)
+
+CLEAN = False
+TRACE = False
+REMOTE = "origin"
+SSTATE_MIRRORS = ''
+LAYERS = {}
+DISTRO = None
+SUPPORTED_MACHINES = []
+
+def echo_check_call(todo, verbosity=False):
+    if verbosity or TRACE:
+        cmd = 'set -x; ' + todo
+    else:
+        cmd = todo
+
+    logger.debug(cmd)
+
+    return str(subprocess.check_output(cmd, shell=True), encoding='utf-8', errors='strict')
+
+def enable_trace():
+    global TRACE
+    TRACE = True
+
+def enable_clean():
+    logger.warn('Running in clean non-interactive mode, all possible local changes and untracked files will be removed')
+    global CLEAN
+    CLEAN = True
+
+def set_log_level(level):
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    f = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s', datefmt='%Y-%m-%dT%H:%M:%S')
+
+    s = logging.StreamHandler()
+    s.setLevel(level)
+
+    s.setFormatter(f)
+    logging.getLogger('').addHandler(s)
+
+# Essentially, mcf parses options, creates mcf.status, and runs mcf.status.
+
+def process_file(f, replacements):
+    (ifile, ofile) = f
+    with open(ifile, 'r') as f:
+        status = f.read()
+
+    for i, j in replacements:
+        status = status.replace(i, j)
+
+    odir = os.path.dirname(ofile)
+    if odir and not os.path.isdir(odir):
+        os.mkdir(odir)
+    with open(ofile, 'w') as f:
+        f.write(status)
+
+def getopts():
+    mcfcommand_option = '--command'
+    mcfcommand_dest = 'mcfcommand'
+    # be careful when changing this, jenkins-job.sh is doing
+    # grep "mcfcommand_choices = \['configure', 'update', "
+    # to detect if it needs to explicitly run --command update after default action
+    mcfcommand_choices = ['configure', 'update', 'update+configure']
+    mcfcommand_default = 'update+configure'
+
+    # Just parse the --command argument here, so that we can select a parser
+    mcfcommand_parser = argparse.ArgumentParser(add_help=False)
+    mcfcommand_parser.add_argument(mcfcommand_option, dest=mcfcommand_dest, choices=mcfcommand_choices, default=mcfcommand_default)
+    mcfcommand_parser_result = mcfcommand_parser.parse_known_args()
+    mcfcommand = mcfcommand_parser_result[0].mcfcommand
+
+    # Put --command back in (as the first option) so that the main parser sees everything
+    arglist = [mcfcommand_option, mcfcommand ] + mcfcommand_parser_result[1]
+
+    parser = argparse.ArgumentParser()
+
+    general = parser.add_argument_group('General Options')
+
+    verbosity = general.add_mutually_exclusive_group()
+
+    verbosity.add_argument('-s', '--silent',  action='count', help='work silently, repeat the option twice to hide also the warnings, tree times to hide the errors as well')
+    verbosity.add_argument('-v', '--verbose', action='count', help='work verbosely, repeat the option twice for more debug output')
+
+    general.add_argument('-c', '--clean', dest='clean', action='store_true', default=False, help='clean checkout - WARN: removes all local changes')
+    general.add_argument('-V', '--version', action='version', version='%(prog)s {0}'.format(__version__), help='print version and exit')
+
+    general.add_argument(mcfcommand_option, dest=mcfcommand_dest, choices=mcfcommand_choices, default=mcfcommand_default,
+                              help='command to mcf; if update is given, none of the remaining options nor MACHINE can be specified (default: %(default)s)')
+
+    if mcfcommand in ('configure','update+configure'):
+        variations = parser.add_argument_group('Build Instructions')
+
+        variations.add_argument('-p', '--enable-parallel-make', dest='parallel_make', type=int, default=0,
+                                help='maximum number of parallel tasks each submake of bitbake should spawn (default: 0 = 2x the number of processor cores)')
+
+        variations.add_argument('-b', '--enable-bb-number-threads', dest='bb_number_threads', type=int, default=0,
+                                help='maximum number of bitbake tasks to spawn (default: 0 = 2x the number of processor cores))')
+
+        icecc = parser.add_argument_group('ICECC Configuration')
+
+        icecc_enable = icecc.add_mutually_exclusive_group()
+        # This can be changed to enabled by default when ES-1618 is fixed
+        icecc_enable.add_argument('--enable-icecc', dest='enable_icecc', action='store_true', default=False,
+                           help='enable build to use ICECC, causes the shared state from the build artifacts not to be used (default: False)')
+
+        icecc_enable.add_argument('--disable-icecc', dest='enable_icecc', action='store_false', default=True,
+                           help='disable build from using ICECC (default: True)')
+
+        icecc.add_argument('--enable-icecc-parallel-make', dest='icecc_parallel_make', type=int, default=0,
+                           help='Number of parallel threads for ICECC build (default: 0 = 4x the number of processor cores))')
+
+        icecc_advanced = parser.add_argument_group('ICECC Advanced Configuration')
+
+        icecc_advanced.add_argument('--enable-icecc-user-package-blacklist', dest='icecc_user_package_blacklist', action='append',
+                           help='Space separated list of components/recipes to be excluded from using ICECC  (default: None)')
+
+        icecc_advanced.add_argument('--enable-icecc-user-class-blacklist', dest='icecc_user_class_blacklist', action='append',
+                           help='Space separated list of components/recipes class to be excluded from using ICECC  (default: None)')
+
+        icecc_advanced.add_argument('--enable-icecc-user-package-whitelist', dest='icecc_user_package_whitelist', action='append',
+                           help='Space separated list of components/recipes to be forced to use ICECC  (default: None)')
+
+        icecc_advanced.add_argument('--enable-icecc-location', dest='icecc_location', default='',
+                           help='location of ICECC tool  (default: None)')
+
+        icecc_advanced.add_argument('--enable-icecc-env-exec', dest='icecc_env_exec', default='',
+                           help='location of ICECC environment script  (default: None)')
+
+
+        partitions = parser.add_argument_group('Source Identification')
+
+        mirrors = parser.add_argument_group('Networking and Mirrors')
+
+        network = mirrors.add_mutually_exclusive_group()
+
+        network.add_argument('--disable-network', dest='network', action='store_false', default=True,
+                             help='disable fetching through the network (default: False)')
+
+        network.add_argument('--enable-network', dest='network', action='store_true', default=True,
+                             help='enable fetching through the network (default: True)')
+
+        mirrors.add_argument('--sstatemirror', dest='sstatemirror', action='append',
+                             help='set sstatemirror to specified URL, repeat this option if you want multiple sstate mirrors (default: None)')
+
+        premirrorurl = mirrors.add_mutually_exclusive_group()
+        default_premirror = 'http://downloads.yoctoproject.org/mirror/sources'
+        premirrorurl.add_argument('--enable-default-premirror', dest='premirror', action='store_const', const=default_premirror, default="",
+                                  help='enable default premirror URL (default: False)')
+        premirrorurl.add_argument('--premirror', '--enable-premirror', dest='premirror', default='',
+                                  help='set premirror to specified URL (default: None)')
+
+        premirroronly = mirrors.add_mutually_exclusive_group()
+        premirroronly.add_argument('--disable-fetch-premirror-only', dest='fetchpremirroronly', action='store_false', default=False,
+                                   help='disable fetching through the network (default: False)')
+
+        premirroronly.add_argument('--enable-fetch-premirror-only', dest='fetchpremirroronly', action='store_true', default=False,
+                                   help='enable fetching through the network (default: True)')
+
+        tarballs = mirrors.add_mutually_exclusive_group()
+        tarballs.add_argument('--disable-generate-mirror-tarballs', dest='generatemirrortarballs', action='store_false', default=False,
+                              help='disable tarball generation of fetched components (default: True)')
+
+        tarballs.add_argument('--enable-generate-mirror-tarballs', dest='generatemirrortarballs', action='store_true', default=False,
+                              help='generate tarballs suitable for mirroring (default: False)')
+
+        buildhistory = parser.add_argument_group('Buildhistory')
+
+        buildhistory1 = buildhistory.add_mutually_exclusive_group()
+
+        buildhistory1.add_argument('--disable-buildhistory', dest='buildhistory', action='store_false', default=True,
+                                  help='disable buildhistory functionality (default: False)')
+
+        buildhistory1.add_argument('--enable-buildhistory', dest='buildhistory', action='store_true', default=True,
+                                  help='enable buildhistory functionality (default: True)')
+
+        buildhistory.add_argument('--enable-buildhistoryauthor', dest='buildhistoryauthor', default='', help='specify name and email used in buildhistory git commits (default: none, will use author from git global config)')
+
+        parser.add_argument('MACHINE', nargs='+')
+
+    options = parser.parse_args(arglist)
+    if mcfcommand in ('configure','update+configure') and options.sstatemirror:
+        process_sstatemirror_option(options)
+    return options
+
+def process_sstatemirror_option(options):
+    """
+       Sets global variable SSTATE_MIRRORS based on list of mirrors in options.sstatemirror
+
+       /PATH suffix is automatically added when generating SSTATE_MIRRORS value
+       verify that user didn't already include it and show error if he did
+    """
+    sstate_mirrors = ''
+    for m in options.sstatemirror:
+        if not m:
+            continue
+        if m.endswith("/PATH"):
+            logger.error("sstatemirror entry '%s', already ends with '/PATH', remove that" % m)
+            sys.exit(1)
+        if m.endswith("/"):
+            logger.error("sstatemirror entry '%s', ends with '/', remove that" % m)
+            sys.exit(1)
+        if len(m) <= 7:
+            logger.error("sstatemirror entry '%s', is incorrect, we expect at least 7 characters for protocol" % m)
+            sys.exit(1)
+        sstate_mirrors += "file://.* %s/PATH \\n \\\n" % m
+    if sstate_mirrors:
+        global SSTATE_MIRRORS
+        SSTATE_MIRRORS = "SSTATE_MIRRORS ?= \" \\\n%s\"\n" % sstate_mirrors
+
+def _icecc_installed():
+    try:
+        # Note that if package is not installed following call will throw an exception
+        iceinstallstatus,iceversion = subprocess.check_output("dpkg-query -W icecc 2>&1" ,
+                                                           shell=True,
+                                                           universal_newlines=True).split()
+        # We are expecting icecc for the name
+        if 'icecc' == iceinstallstatus:
+             if '1.0.1-1' == iceversion:
+                 return True
+             else:
+                 logger.warn("WARNING: Wrong icecc package version {} is installed, disabling build from using ICECC.\n".format(iceversion) + \
+                             "Please check 'How To Install ICECC on Your Workstation (Client)'\n" + \
+                             "http://wiki.lgsvl.com/pages/viewpage.action?pageId=96175316")
+                 return False
+        else:
+             logger.warn('WARNING: ICECC package installation check failed, disabling build from using ICECC.')
+             return False
+
+    except:
+        logger.warn('WARNING: ICECC package installation check failed, disabling build from using ICECC.')
+        return False
+
+def location_to_dirname(location):
+    str1 = location.split('/')
+    return os.path.splitext(str1[len(str1)-1])[0]
+
+def read_weboslayers(path):
+    sys.path.insert(0,path)
+    if not os.path.isfile(os.path.join(path,'weboslayers.py')):
+        raise Exception("Error: Configuration file %s does not exist!" % os.path.join(path,'weboslayers.py'))
+
+    from weboslayers import webos_layers
+
+    for p in webos_layers:
+        layer = {"name":p[0], "priority":p[1], "url":p[2], "submission":p[3], "location":p[4]}
+        LAYERS[layer["name"]] = layer
+        parsesubmissions(layer)
+        if not layer["url"] and not layer["location"]:
+            raise Exception("Error: Layer '%s' does not have either URL or alternative working-dir defined in weboslayers.py" % layer["name"])
+        if not layer["location"]:
+            layer["location"] = location_to_dirname(layer["url"])
+
+    from weboslayers import Distribution
+    global DISTRO
+    DISTRO = Distribution
+
+    from weboslayers import Machines
+    global SUPPORTED_MACHINES
+    SUPPORTED_MACHINES = Machines
+
+def parsesubmissions(layer):
+    branch = ''
+    commit = ''
+    tag = ''
+    for vgit in layer["submission"].split(','):
+        if not vgit:
+            continue
+        str1, str2 = vgit.split('=')
+        if str1.lower() == 'commit':
+            if not commit:
+                commit = str2
+        elif str1.lower() == 'branch':
+            branch = str2
+        elif str1.lower() == 'tag':
+            if not tag:
+                tag = str2
+
+    if not branch:
+        branch = 'master'
+
+    layer["branch_new"] = branch
+    layer["commit_new"] = commit
+    layer["tag_new"] = tag
+
+def wait_for_git_mirror(newcommitid):
+    repodir=os.getcwd()
+    cmd = 'git fetch %s %s >&2' % (REMOTE, newcommitid)
+    success = False
+    nr_of_retries = 30
+    for i in range(1, nr_of_retries+1):
+        logger.info('MCF-%s: trying to fetch revision %s in %s attempt %s from %s' % (__version__, newcommitid, repodir, i, nr_of_retries))
+        try:
+            if newcommitid.startswith('refs/changes/'):
+                echo_check_call(cmd)
+            elif not contains_ref(newcommitid):
+                echo_check_call('git remote update && git fetch %s --tags' % REMOTE)
+            success = True
+            break
+        except subprocess.CalledProcessError:
+            sleep(30)
+    if not success:
+        logger.error("MCF-%s Cannot checkout %s in %s" % (__version__, newcommitid, repodir))
+        sys.exit(1)
+
+def downloadrepo(layer):
+    cmd = 'git clone %s %s' % (layer["url"], layer["location"])
+    echo_check_call(cmd)
+
+    olddir = os.getcwd()
+    os.chdir(layer["location"])
+    newbranch = layer["branch_new"]
+
+    if newbranch:
+        refbranchlist = echo_check_call("git branch")
+        refbranch = refbranchlist.splitlines()
+        foundbranch = False
+        for ibranch in refbranch:
+            if newbranch in ibranch:
+                foundbranch = True
+        if not foundbranch:
+            refbranchlist = echo_check_call("git branch -r")
+            refbranch = refbranchlist.splitlines()
+            for ibranch in refbranch:
+                if ibranch == "  %s/%s" % (REMOTE, newbranch):
+                    foundbranch = True
+                    logger.info( " found %s " % ibranch )
+                    cmd ='git checkout -B %s %s' % (newbranch,ibranch)
+                    echo_check_call(cmd)
+                    break
+
+    currentbranch = echo_check_call("git rev-parse --abbrev-ref HEAD").rstrip()
+    newcommitid = layer["commit_new"]
+    if newcommitid:
+        if newcommitid.startswith('refs/changes/'):
+            wait_for_git_mirror(newcommitid)
+            if newbranch and newbranch != currentbranch:
+                # older git doesn't allow to update reference on currently checked out branch
+                cmd ='git checkout -B %s FETCH_HEAD' % (newbranch)
+            elif newbranch:
+                # we're already on requested branch
+                cmd ='git reset --hard FETCH_HEAD'
+            else:
+                # we don't have any branch preference use detached
+                cmd ='git checkout FETCH_HEAD'
+            echo_check_call(cmd)
+        else:
+            if not contains_ref(newcommitid):
+                wait_for_git_mirror(newcommitid)
+            if newbranch and newbranch != currentbranch:
+                # older git doesn't allow to update reference on currently checked out branch
+                cmd ='git checkout -B %s %s' % (newbranch,newcommitid)
+            elif newbranch:
+                # we're already on requested branch
+                cmd ='git reset --hard %s' % newcommitid
+            else:
+                # we don't have any branch preference use detached
+                cmd ='git checkout %s' % newcommitid
+            echo_check_call(cmd)
+
+    newtag = layer["tag_new"]
+    if newtag:
+        if newbranch and newbranch != currentbranch:
+            # older git doesn't allow to update reference on currently checked out branch
+            cmd ='git checkout -B %s %s' % (newbranch,newtag)
+        elif newbranch:
+            # we're already on requested branch
+            cmd ='git reset --hard %s' % newtag
+        else:
+            cmd ='git checkout %s' % newtag
+        echo_check_call(cmd)
+
+    os.chdir(olddir)
+
+def parselayerconffile(layer, layerconffile):
+    with open(layerconffile, 'r') as f:
+        lines = f.readlines()
+    for line in lines:
+        if re.search( 'BBFILE_COLLECTIONS.*=' , line):
+            (dummy, collectionname) = line.rsplit('=')
+            collectionname = collectionname.strip()
+            collectionname = collectionname.strip("\"")
+            layer["collection_name"] = collectionname
+            logger.debug("parselayerconffile(%s,%s) -> %s" % (layer["name"], layerconffile, layer["collection_name"]))
+
+def traversedir(layer):
+    for path, dirs, files in os.walk(layer["location"]):
+        if os.path.basename(os.path.dirname(path)) == layer["name"]:
+            for filename in files:
+                if filename == 'layer.conf':
+                    layer["collection_path"] = os.path.relpath(os.path.dirname(path), os.path.dirname(layer["location"]))
+                    logger.debug("traversedir(%s,%s) -> %s" % (layer["name"], layer["location"], layer["collection_path"]))
+
+                    layerconffile = os.path.join(path, filename)
+                    parselayerconffile(layer, layerconffile)
+                    break
+
+def parse_collections(srcdir):
+    for layer in sorted(LAYERS.values(), key=lambda l: l["priority"]):
+        if os.path.exists(layer["location"]):
+            traversedir(layer)
+        else:
+            raise Exception("Error: Directory '%s' does not exist, you probably need to call update" % layer["location"])
+
+def write_bblayers_conf(sourcedir):
+    locations = ""
+    bblayers = ""
+    priorities = ""
+    for layer in sorted(LAYERS.values(), key=lambda l: l["priority"], reverse=True):
+        if layer["priority"] == -1:
+            # bitbake is not metadata layer, skip it
+            continue
+
+        if os.path.isabs(layer["location"]):
+            topdir = layer["location"]
+        else:
+            topdir = "${TOPDIR}"
+        layer_name = layer["name"].replace('-','_').upper()
+
+        if "collection_path" not in layer:
+            logger.error("Layer %s doesn't exist at all or local.conf file wasn't found inside" % layer["name"])
+            continue
+
+        locations  += "%s_LAYER ?= \"%s/%s\"\n" % (layer_name, topdir, layer["collection_path"])
+        bblayers   += "    ${%s_LAYER} \\\n" % layer_name
+        priorities += "BBFILE_PRIORITY_%s_forcevariable = \"%s\"\n" % (layer["collection_name"], layer["priority"])
+
+    with open(os.path.join(sourcedir, "conf", "bblayers.conf"), 'a') as f:
+        f.write('\n')
+        f.write(locations)
+        f.write('\n')
+        f.write('BBFILES ?= ""\n')
+        f.write('BBLAYERS ?= " \\\n')
+        f.write(bblayers)
+        f.write('"\n')
+        f.write(priorities)
+
+def update_layers(sourcedir):
+    logger.info('MCF-%s: Updating build directory' % __version__)
+    layers_sanity = list()
+    update_location = list()
+    for layer in sorted(LAYERS.values(), key=lambda l: l["priority"]):
+        if layer["submission"] and layer["location"] not in update_location:
+            update_location.append(layer["location"])
+            if not os.path.exists(os.path.abspath(layer["location"])):
+                # downloadrepo
+                downloadrepo(layer)
+            else:
+                # run sanity check on repo
+                if reposanitycheck(layer) != 0:
+                    layers_sanity.append(layer["location"])
+
+                # update layers
+                updaterepo(layer)
+
+    if layers_sanity:
+        logger.info('Found local changes for repos(s) %s' % layers_sanity)
+
+    printupdatesummary()
+
+def printupdatesummary ():
+    logger.info('Repo Update Summary')
+    logger.info('===================')
+    found = False
+    for layer in sorted(LAYERS.values(), key=lambda l: l["priority"]):
+        if "sanity_uncommitted_clean" in layer and layer["sanity_uncommitted_clean"]:
+            logger.info('    *) local uncommitted changes were removed because of --clean parameter')
+            found = True
+        if "sanity_uncommitted_changes" in layer and layer["sanity_uncommitted_changes"]:
+            logger.info('    *) local uncommitted changes, use \'git stash pop\' to retrieve')
+            found = True
+        if "sanity_dumped_changes" in layer and layer["sanity_dumped_changes"]:
+            logger.info('    *) local committed changes, patches are backed up in %s/' % layer["repo_patch_dir"])
+            found = True
+        if "sanity_untracked_changes" in layer and layer["sanity_untracked_changes"]:
+            logger.info('    *) local untracked changes')
+            found = True
+        if "branch_new" in layer and "branch_current" in layer and layer["branch_new"] != layer["branch_current"]:
+            logger.info('    *) switched branches from %s to %s' % (layer["branch_current"], layer["branch_new"]))
+            found = True
+    if not found:
+        logger.info('No local changes found')
+
+def get_remote_branch(newbranch, second_call = False):
+    remotebranch = None
+    refbranchlist = echo_check_call("git branch -r")
+    refbranch = refbranchlist.splitlines()
+    for ibranch in refbranch:
+        if ibranch == "  %s/%s" % (REMOTE, newbranch):
+            remotebranch = ibranch.strip()
+            break
+    if remotebranch or second_call:
+        return remotebranch
+    else:
+        # try it again after "git remote update"
+        echo_check_call("git remote update")
+        return get_remote_branch(newbranch, True)
+
+def reposanitycheck(layer):
+    olddir = os.getcwd()
+    os.chdir(layer["location"])
+
+    layer["branch_current"] = echo_check_call("git rev-parse --abbrev-ref HEAD").rstrip()
+
+    res = False
+
+    if CLEAN:
+        if echo_check_call("git status --porcelain -s"):
+            layer["sanity_uncommitted_clean"] = True
+            logger.warn('Removing all local changes and untracked files in [%s]' % layer["location"])
+            # abort rebase if git pull --rebase from update_layers got stuck on some local commit
+            try:
+                echo_check_call("git rebase --abort 2>/dev/null")
+            except subprocess.CalledProcessError:
+                # we can ignore this one
+                pass
+
+            echo_check_call("git stash clear")
+            echo_check_call("git clean -fdx")
+            echo_check_call("git reset --hard")
+    else:
+        logger.info('Checking for local changes in [%s]' % layer["location"])
+        if echo_check_call("git status --porcelain --u=no -s"):
+            logger.warn('Found local uncommitted changes in [%s]' % layer["location"])
+            layer["sanity_uncommitted_changes"] = True
+            echo_check_call("git stash")
+            res = True
+
+        if echo_check_call("git status --porcelain -s | grep -v '^?? MCF-PATCHES_' || true"):
+            logger.warn('Found local untracked changes in [%s]' % layer["location"])
+            layer["sanity_untracked_changes"] = True
+            res = True
+
+    try:
+        remote = echo_check_call('git remote | grep "^%s$"' % REMOTE)
+    except subprocess.CalledProcessError:
+        remote = ''
+
+    if not remote:
+        logger.error("Checkout %s doesn't have the remote '%s'" % (layer["location"], REMOTE))
+        raise Exception("Checkout %s doesn't have the remote '%s'" % (layer["location"], REMOTE))
+
+    try:
+        urlcurrent = echo_check_call("git config remote.%s.url" % REMOTE)
+    except subprocess.CalledProcessError:
+        # git config returns 1 when the option isn't set
+        urlcurrent = ''
+
+    # there is extra newline at the end
+    urlcurrent = urlcurrent.strip()
+
+    logger.debug("reposanitycheck(%s) dir %s, branchinfo %s, branchinfonew %s, url %s, urlnew %s" % (layer["name"], layer["location"], layer["branch_current"], layer["branch_new"], layer["url"], urlcurrent))
+
+    if urlcurrent != layer["url"]:
+        logger.warn("Changing url for remote '%s' from '%s' to '%s'" % (REMOTE, urlcurrent, layer["url"]))
+        echo_check_call("git remote set-url %s %s" % (REMOTE, layer["url"]))
+        # Sync with new remote repo
+        try:
+            echo_check_call('git remote update')
+        except subprocess.CalledProcessError:
+            raise Exception('Failed to fetch %s repo' % LOCATIONS[layer])
+
+    newbranch = layer["branch_new"]
+    if newbranch:
+        refbranchlist = echo_check_call("git branch")
+        refbranch = refbranchlist.splitlines()
+        foundlocalbranch = False
+        needcheckout = True
+        for ibranch in refbranch:
+            if ibranch == "  %s" % newbranch:
+                foundlocalbranch = True
+                break
+            if ibranch == "* %s" % newbranch:
+                foundlocalbranch = True
+                needcheckout = False
+                break
+
+        remotebranch = get_remote_branch(newbranch)
+
+        if foundlocalbranch and remotebranch:
+            if needcheckout:
+                echo_check_call('git checkout %s' % newbranch)
+
+            head = echo_check_call("git rev-parse --abbrev-ref HEAD").rstrip()
+            patchdir = './MCF-PATCHES_%s-%s' % (head.replace('/','_'), timestamp)
+            layer["repo_patch_dir"] = "%s/%s" % (layer["location"], patchdir)
+            cmd ='git format-patch %s..%s -o %s' % (remotebranch,newbranch,patchdir)
+            rawpatches = echo_check_call(cmd)
+            patches = rawpatches.splitlines()
+            num = len(patches)
+            # logger.info( ' info: number of patches: %s ' % num)
+            if num > 0:
+                layer["sanity_dumped_changes"] = True
+                res = True
+            else:
+                # remove empty dir if there weren't any patches created by format-patch
+                cmd ='rmdir --ignore-fail-on-non-empty %s' % patchdir
+                echo_check_call(cmd)
+
+            try:
+                trackingbranch = echo_check_call("git config --get branch.%s.merge" % newbranch)
+            except subprocess.CalledProcessError:
+                # git config returns 1 when the option isn't set
+                trackingbranch = ''
+
+            try:
+                trackingremote = echo_check_call("git config --get branch.%s.remote" % newbranch)
+            except subprocess.CalledProcessError:
+                # git config returns 1 when the option isn't set
+                trackingremote = ''
+
+            # there is extra newline at the end
+            trackingbranch = trackingbranch.strip()
+            trackingremote = trackingremote.strip()
+
+            if not trackingbranch or not trackingremote or trackingbranch.replace('refs/heads',trackingremote) != remotebranch:
+                logger.warn("checkout %s was tracking '%s/%s' changing it to track '%s'" % (layer["location"], trackingremote, trackingbranch, remotebranch))
+                # to ensure we are tracking remote
+                echo_check_call('git branch --set-upstream %s %s' % (newbranch, remotebranch))
+
+        elif not foundlocalbranch and remotebranch:
+            echo_check_call('git checkout -b %s %s' % (newbranch, remotebranch))
+        else:
+            # anything else is failure
+            raise Exception('Could not find local and remote branches for %s' % newbranch)
+    else:
+            raise Exception('Undefined branch name')
+
+    newdir = os.chdir(olddir)
+    return res
+
+# Taken from bitbake/lib/bb/fetch2/git.py with modifications for mcf usage
+def contains_ref(tag):
+    cmd = "git log --pretty=oneline -n 1 %s -- 2>/dev/null | wc -l" % (tag)
+    output = echo_check_call(cmd)
+    if len(output.split()) > 1:
+        raise Exception("Error: '%s' gave output with more then 1 line unexpectedly, output: '%s'" % (cmd, output))
+    return output.split()[0] != "0"
+
+def updaterepo(layer):
+    olddir = os.getcwd()
+    os.chdir(layer["location"])
+
+    layer["commit_current"] = echo_check_call("git  log --pretty=format:%h -1")
+
+    newcommitid = layer["commit_new"]
+    currentcommitid = layer["commit_current"]
+    newbranch = layer["branch_new"]
+    currentbranch = layer["branch_current"]
+
+    logger.debug("updaterepo(%s) dir %s, id %s, newid %s, branch %s, newbranch %s" % (layer["name"], layer["location"], currentcommitid, newcommitid, currentbranch, newbranch))
+
+    if newcommitid != currentcommitid:
+        logger.info('Updating [%s]' % layer["location"])
+        if newcommitid:
+            if newcommitid.startswith('refs/changes/'):
+                wait_for_git_mirror(newcommitid)
+                if newbranch and newbranch != currentbranch:
+                    # older git doesn't allow to update reference on currently checked out branch
+                    cmd ='git checkout -B %s FETCH_HEAD' % (newbranch)
+                elif newbranch:
+                    # we're already on requested branch
+                    cmd ='git reset --hard FETCH_HEAD'
+                else:
+                    # we don't have any branch preference use detached
+                    cmd ='git checkout FETCH_HEAD'
+                echo_check_call(cmd)
+            else:
+                if not contains_ref(newcommitid):
+                    wait_for_git_mirror(newcommitid)
+                if newbranch and newbranch != currentbranch:
+                    # older git doesn't allow to update reference on currently checked out branch
+                    cmd ='git checkout -B %s %s' % (newbranch,newcommitid)
+                elif newbranch:
+                    # we're already on requested branch
+                    cmd ='git reset --hard %s' % newcommitid
+                else:
+                    # we don't have any branch preference use detached
+                    cmd ='git checkout %s' % newcommitid
+                echo_check_call(cmd)
+        else:
+            if CLEAN:
+                echo_check_call("git remote update")
+                echo_check_call('git reset --hard %s/%s' % (REMOTE, newbranch))
+            else:
+                # current branch always tracks a remote one
+                echo_check_call('git pull %s' % REMOTE)
+        logger.info('Done updating [%s]' % layer["location"])
+    else:
+        logger.info(('[%s] is up-to-date.' % layer["location"]))
+
+    newdir = os.chdir(olddir)
+    os.getcwd()
+
+def set_verbosity(options):
+    if options.silent and options.silent == 1:
+        set_log_level('WARNING')
+    elif options.silent and options.silent == 2:
+        set_log_level('ERROR')
+    elif options.silent and options.silent >= 3:
+        set_log_level('CRITICAL')
+    elif options.verbose and options.verbose == 1:
+        set_log_level('DEBUG')
+    elif options.verbose and options.verbose >= 2:
+        set_log_level('DEBUG')
+        # but also run every system command with set -x
+        enable_trace()
+    else:
+        set_log_level('INFO')
+
+def recover_current_mcf_state(srcdir, origoptions):
+    mcfstatusfile = os.path.join(srcdir, "mcf.status")
+    if not os.path.exists(mcfstatusfile):
+        raise Exception("mcf.status does not exist.")
+
+    commandlinereconstructed = list()
+    commandlinereconstructed.append('ignored-argv-0')
+    start = False
+    with open(mcfstatusfile, 'r') as f:
+        for line in f.readlines():
+            line = line.strip()
+            if not start:
+                start = line.startswith("exec")
+                continue
+
+            if start:
+                if line.startswith('--command'):
+                    # skip --command configure
+                    continue
+                elif line.startswith('--'):
+                    line = line.rstrip('\\')
+                    line = line.strip(' ')
+                    line = line.replace('\"','')
+                    line = line.replace('\'','')
+                    commandlinereconstructed.append(line)
+                else:
+                    lines = line.rstrip('\\')
+                    lines = lines.lstrip()
+                    lines = lines.rstrip()
+                    lines = lines.split()
+                    for lline in lines:
+                        commandlinereconstructed.append(lline)
+
+    sys.argv = commandlinereconstructed
+    options = getopts()
+    # always use clean/verbose/silent flags from origoptions not mcf.status
+    options.clean = origoptions.clean
+    options.verbose = origoptions.verbose
+    options.silent = origoptions.silent
+    return options
+
+def checkmirror(name, url):
+    if url.startswith('file://'):
+        pathstr = url[7:]
+        if not os.path.isdir(pathstr):
+            logger.warn("%s parameter '%s' points to non-existent directory" % (name, url))
+        elif not os.listdir(pathstr):
+            logger.warn("%s parameter '%s' points to empty directory, did you forgot to mount it?" % (name, url))
+    elif len(url) <= 7:
+        logger.error("%s parameter '%s' is incorrect, we expect at least 7 characters for protocol" % (name, url))
+
+def sanitycheck(options):
+    try:
+        mirror = echo_check_call('git config -l | grep "^url\..*insteadof=github.com/"')
+    except subprocess.CalledProcessError:
+        # git config returns 1 when the option isn't set
+        mirror = ''
+        pass
+    if not mirror:
+        logger.warn('No mirror for github.com was detected, please define mirrors in ~/.gitconfig if some are available')
+    if options.sstatemirror:
+        for m in options.sstatemirror:
+            if not m:
+                continue
+            checkmirror('sstatemirror', m)
+    if options.premirror:
+        checkmirror('premirror', options.premirror)
+
+def configure_build(srcdir, options):
+    files = [
+        [os.path.join(srcdir, 'build-templates', 'mcf-status.in'),        'mcf.status'        ],
+        [os.path.join(srcdir, 'build-templates', 'oe-init-build-env.in'), 'oe-init-build-env' ],
+        [os.path.join(srcdir, 'build-templates', 'Makefile.in'),          'Makefile'          ],
+        [os.path.join(srcdir, 'build-templates', 'bblayers-conf.in'),     'conf/bblayers.conf'],
+        [os.path.join(srcdir, 'build-templates', 'local-conf.in'),        'conf/local.conf'   ],
+    ]
+
+    replacements = [
+        ['@bb_number_threads@', str(options.bb_number_threads)],
+        ['@parallel_make@',     str(options.parallel_make)],
+        ['@no_network@',               '0'            if options.network                else '1'],
+        ['@fetchpremirroronly@',       '1'            if options.fetchpremirroronly     else '0'],
+        ['@generatemirrortarballs@',   '1'            if options.generatemirrortarballs else '0'],
+        ['@buildhistory_enabled@',     '1'            if options.buildhistory           else '0'],
+        ['@buildhistory_class@',       'buildhistory' if options.buildhistory           else '' ],
+        ['@buildhistory_author_assignment@', 'BUILDHISTORY_COMMIT_AUTHOR ?= "%s"' % options.buildhistoryauthor if options.buildhistoryauthor else ''],
+        ['@premirror_assignment@',           'SOURCE_MIRROR_URL ?= "%s"' % options.premirror   if options.premirror     else ''],
+        ['@premirror_inherit@',              'INHERIT += "own-mirrors"'                        if options.premirror     else ''],
+        ['@sstatemirror_assignment@',        SSTATE_MIRRORS                                    if options.sstatemirror  else ''],
+        ['@premirror@', options.premirror],
+        ['@sstatemirror@', ' --sstatemirror='.join(options.sstatemirror) if options.sstatemirror else ''],
+        ['@buildhistoryauthor@', options.buildhistoryauthor],
+        ['@buildhistory@',                         '--%s-buildhistory'                      % ('enable' if options.buildhistory                   else 'disable')],
+        ['@network@',                              '--%s-network'                           % ('enable' if options.network                        else 'disable')],
+        ['@fetchpremirroronlyoption@',             '--%s-fetch-premirror-only'              % ('enable' if options.fetchpremirroronly             else 'disable')],
+        ['@generatemirrortarballsoption@',         '--%s-generate-mirror-tarballs'          % ('enable' if options.generatemirrortarballs         else 'disable')],
+        ['@machine@', options.MACHINE[0]],
+        ['@machines@', ' '.join(options.MACHINE)],
+        ['@distro@', DISTRO],
+        ['@prog@', progname],
+        ['@srcdir@', srcdir],
+        ['@abs_srcdir@', abs_srcdir],
+    ]
+
+    # if icecc is not installed, or version does not match requirements, then disabling icecc is the correct action.
+    icestate = _icecc_installed()
+
+    icecc_replacements = [
+        ['@icecc_disable_enable@',           '1' if not icestate or not options.enable_icecc else ''],
+        ['@icecc_parallel_make@',            '%s'                             % options.icecc_parallel_make],
+        ['@alternative_icecc_installation@', ('ICECC_PATH ?= "%s"'            % options.icecc_location) if options.icecc_location else ''],
+        ['@icecc_user_package_blacklist@',   ('ICECC_USER_PACKAGE_BL ?= "%s"' % ' '.join(options.icecc_user_package_blacklist)) if options.icecc_user_package_blacklist else ''],
+        ['@icecc_user_class_blacklist@',     ('ICECC_USER_CLASS_BL ?= "%s"'   % ' '.join(options.icecc_user_class_blacklist)) if options.icecc_user_class_blacklist else ''],
+        ['@icecc_user_package_whitelist@',   ('ICECC_USER_PACKAGE_WL ?= "%s"' % ' '.join(options.icecc_user_package_whitelist)) if options.icecc_user_package_whitelist else ''],
+        ['@icecc_environment_script@',       'ICECC_ENV_EXEC ?= "%s"' % options.icecc_env_exec if options.icecc_location else ''],
+        ['@icecc_disable_enable_mcf@',       '--%s-icecc'                     % ('disable' if not icestate or not options.enable_icecc else 'enable')],
+        ['@alternative_icecc_installation_mcf@', options.icecc_location if options.icecc_location else ''],
+        ['@icecc_environment_script_mcf@',       options.icecc_env_exec if options.icecc_location else ''],
+        ['@icecc_user_package_blacklist_mcf@',   (' '.join(options.icecc_user_package_blacklist)) if options.icecc_user_package_blacklist else ''],
+        ['@icecc_user_class_blacklist_mcf@',     (' '.join(options.icecc_user_class_blacklist)) if options.icecc_user_class_blacklist else ''],
+        ['@icecc_user_package_whitelist_mcf@',   (' '.join(options.icecc_user_package_whitelist)) if options.icecc_user_package_whitelist else ''],
+    ]
+
+    replacements =  replacements + icecc_replacements
+
+    logger.info('MCF-%s: Configuring build directory BUILD' % __version__)
+    for f in files:
+        process_file(f, replacements)
+    parse_collections(srcdir)
+    write_bblayers_conf(srcdir)
+    logger.info('MCF-%s: Done configuring build directory BUILD' % __version__)
+
+    echo_check_call('/bin/chmod a+x mcf.status', options.verbose)
+
+if __name__ == '__main__':
+    # NB. The exec done by mcf.status causes argv[0] to be an absolute pathname
+    progname = sys.argv[0]
+
+    # Use the same timestamp for everything created by this invocation of mcf
+    timestamp = strftime("%Y%m%d%H%M%S", gmtime())
+
+    options = getopts()
+
+    srcdir = os.path.dirname(progname)
+    abs_srcdir = os.path.abspath(srcdir)
+
+    if options.mcfcommand == 'update':
+         # recover current mcf state
+        options = recover_current_mcf_state(srcdir, options)
+
+    set_verbosity(options)
+
+    if options.clean:
+        enable_clean()
+
+    read_weboslayers(srcdir)
+    for M in options.MACHINE:
+        if M not in SUPPORTED_MACHINES:
+            logger.error("MACHINE argument '%s' isn't supported (does not appear in Machines in weboslayers.py '%s')" % (M, SUPPORTED_MACHINES))
+            sys.exit(1)
+
+    if options.mcfcommand != 'configure':
+        update_layers(srcdir)
+
+    configure_build(srcdir, options)
+
+    sanitycheck(options)
+    logger.info('Done.')
