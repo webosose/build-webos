@@ -60,7 +60,7 @@ To blow away the build artifacts and prepare to do clean build, you can remove t
     $ rm -rf BUILD
     $ ./mcf.status
 
-What this retains are the caches of downloaded source (under `./downloads`) and shared state (under `./sstate-cache`). These caches will save you a tremendous amount of time during development as they facilitate incremental builds, but can cause seemingly inexplicable behavior when corrupted. If you experience strangeness, use the command presented below to remove the shared state of suspicious components. In extreme cases, you may need to remove the entire shared state cache. See [here](http://www.yoctoproject.org/docs/latest/overview-manual/overview-manual.html#shared-state-cache) for more information on it.
+What this retains are the caches of downloaded source (under `./downloads`) and shared state (under `./sstate-cache`). These caches will save you a tremendous amount of time during development as they facilitate incremental builds, but can cause seemingly inexplicable behavior when corrupted. If you experience strangeness, use the command presented below to remove the shared state of suspicious components. In extreme cases, you may need to remove the entire shared state cache. See [here](https://www.yoctoproject.org/docs/current/ref-manual/ref-manual.html#shared-state-cache) for more information on it.
 
 
 Building Individual Components
