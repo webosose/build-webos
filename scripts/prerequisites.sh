@@ -14,11 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This has only been tested on Ubuntu-12.04 and Ubuntu-14.04 amd64.
+# This has only been tested on Ubuntu-12.04, Ubuntu-14.04 and Ubuntu-16.04 amd64.
 
 check_sanity=true
 usage="$0 [--help|-h] [--version|-V] [--force|-f]"
-version="2.2.1"
+version="2.2.2"
 statusfile="/etc/webos.prerequisites"
 
 for i ; do
@@ -114,6 +114,9 @@ case "${check_sanity}" in
     false) ;;
 esac
 
+# Installing newer versions of node-js
+curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+
 apt-get update
 
 # These are essential to pass OE sanity test
@@ -133,6 +136,7 @@ essential="\
     python3 \
     texinfo \
     wget \
+    nodejs \
 "
 
 # bzip2, gzip, tar, zip are used by our scripts/build.sh
@@ -155,6 +159,10 @@ apt-get install --yes \
     ${essential} \
     ${extras} \
     ${archivers} \
+
+npm install -g node-gyp-install
+
+node-gyp-install
 
 locale-gen en_US.utf8
 
