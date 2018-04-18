@@ -25,6 +25,7 @@ Prerequisites
 =============
 Before you can build, you will need some tools.  If you try to build without them, bitbake will fail a sanity check and tell you what's missing, but not really how to get the missing pieces. On Ubuntu, you can force all of the missing pieces to be installed by entering:
 
+    $ cd build-webos
     $ sudo scripts/prerequisites.sh
 
 Also, the bitbake sanity check will issue a warning if you're not running under Ubuntu 14.04 64bit LTS.
