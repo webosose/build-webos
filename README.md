@@ -32,9 +32,13 @@ Also, the bitbake sanity check will issue a warning if you're not running under 
 
 Building
 ========
-To configure the build for the raspberrypi3 and to fetch the sources:
+To configure the build for the raspberrypi3 or qemux86 and to fetch the sources:
 
+    For raspberrypi3
     $ ./mcf -p 0 -b 0 raspberrypi3
+
+    For qemux86
+    $ ./mcf -p 0 -b 0 qemux86
 
 The `-p 0` and `-b 0` options set the make and bitbake parallelism values to the number of CPU cores found on your computer.
 
