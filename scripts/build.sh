@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.2c"
+SCRIPT_VERSION="6.10.2d"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="svl"
 
@@ -249,7 +249,9 @@ function add_md5sums_and_buildhistory_artifacts {
                     ${ARTIFACTS}/${MACHINE}/${I}/*.tar.gz \
                     ${ARTIFACTS}/${MACHINE}/${I}/*.tar.bz2 \
                     ${ARTIFACTS}/${MACHINE}/${I}/*.rpi-sdimg \
+                    ${ARTIFACTS}/${MACHINE}/${I}/*.rpi-sdimg.gz \
                     ${ARTIFACTS}/${MACHINE}/${I}/*.zip \
+                    ${ARTIFACTS}/${MACHINE}/${I}/*.vfat \
                     ${ARTIFACTS}/${MACHINE}/*.fastboot \
                     ${ARTIFACTS}/${MACHINE}/${I}/*.fastboot \
                     ${ARTIFACTS}/${MACHINE}/${I}/*.epk \
@@ -392,6 +394,12 @@ function move_artifacts {
       fi
       if ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.tar.gz >/dev/null 2>/dev/null; then
         ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.tar.gz ${ARTIFACTS}/${MACHINE}/${I}/
+      fi
+      if ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.tar.bz2 >/dev/null 2>/dev/null; then
+        ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.tar.bz2 ${ARTIFACTS}/${MACHINE}/${I}/
+      fi
+      if ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vfat >/dev/null 2>/dev/null; then
+        ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vfat ${ARTIFACTS}/${MACHINE}/${I}/
       fi
     elif ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.tar.gz >/dev/null 2>/dev/null \
       || ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.fastboot >/dev/null 2>/dev/null \
