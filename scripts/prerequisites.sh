@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# Copyright (c) 2008-2013 LG Electronics, Inc.
+# Copyright (c) 2008-2018 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 check_sanity=true
 usage="$0 [--help|-h] [--version|-V] [--force|-f]"
-version="2.2.1"
+version="2.2.2"
 statusfile="/etc/webos.prerequisites"
 
 for i ; do
@@ -134,6 +134,10 @@ essential="\
     texinfo \
     wget \
 "
+
+# add python3-distutils only for 18.04 (and later should be added for newer)
+# because it doesn't exist as separate package in older Ubuntu releases
+[ `/usr/bin/lsb_release -s -r` = "18.04" ] && essential="${essential} python3-distutils"
 
 # bzip2, gzip, tar, zip are used by our scripts/build.sh
 archivers="\
