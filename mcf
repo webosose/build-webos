@@ -25,7 +25,7 @@ from time import gmtime, strftime, sleep
 import shutil
 import glob
 
-__version__ = "6.2.2"
+__version__ = "6.2.3"
 
 logger = logging.getLogger(__name__)
 
@@ -644,7 +644,7 @@ def reposanitycheck(layer):
             if not trackingbranch or not trackingremote or trackingbranch.replace('refs/heads',trackingremote) != remotebranch:
                 logger.warn("checkout %s was tracking '%s/%s' changing it to track '%s'" % (layer["location"], trackingremote, trackingbranch, remotebranch))
                 # to ensure we are tracking remote
-                echo_check_call('git branch --set-upstream %s %s' % (newbranch, remotebranch))
+                echo_check_call('git branch %s --set-upstream-to %s' % (newbranch, remotebranch))
 
         elif not foundlocalbranch and remotebranch:
             echo_check_call('git checkout -b %s %s' % (newbranch, remotebranch))
