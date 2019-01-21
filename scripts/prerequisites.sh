@@ -114,8 +114,6 @@ case "${check_sanity}" in
     false) ;;
 esac
 
-apt-get update
-
 # These are essential to pass OE sanity test
 # locales, because utf8 is needed with newer bitbake which uses python3
 essential="\
@@ -155,10 +153,23 @@ extras="\
     time \
 "
 
+# add ppa for openjdk
+java_version=`java -version 2>&1 | head -n 1 | cut -d\" -f 2 | cut -d\. -f 1`
+if [ -z $java_version ] || [ $java_version -lt 10 ]; then
+    add-apt-repository ppa:openjdk-r/ppa
+    extras="${extras} openjdk-11-jdk"
+fi
+
+apt-get update
+
 apt-get install --yes \
     ${essential} \
     ${extras} \
     ${archivers} \
+
+if [ -z $java_version ] || [ $java_version -lt 10 ]; then
+    update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+fi
 
 locale-gen en_US.utf8
 
