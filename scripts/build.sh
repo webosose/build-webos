@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.2d"
+SCRIPT_VERSION="6.10.3"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="svl"
 
@@ -654,7 +654,7 @@ else
     done
   fi
 
-  grep -R "Elapsed time" BUILD/buildstats | sed 's/^.*\/\(.*\): Elapsed time: \(.*\)$/\2 \1/g' | sort -n | tail -n 20 | tee -a ${ARTIFACTS}/top20buildstats.txt
+  grep -R "Elapsed time" BUILD/buildstats | sed 's/^.*\/\([^\/]*\/[^\/]*\):Elapsed time: \(.*\)$/\2 \1/g' | sort -n | tail -n 20 | tee -a ${ARTIFACTS}/top20buildstats.txt
   tar cjf ${ARTIFACTS}/buildstats.tar.bz2 BUILD/buildstats
   if [ -e BUILD/qa.log ]; then
     ln -vn BUILD/qa.log ${ARTIFACTS} || true
