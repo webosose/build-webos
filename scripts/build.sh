@@ -18,9 +18,9 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.3"
+SCRIPT_VERSION="6.10.4"
 SCRIPT_NAME=`basename $0`
-AUTHORITATIVE_OFFICIAL_BUILD_SITE="svl"
+AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
 BUILD_REPO="webosose/build-webos"
 BUILD_LAYERS=("webosose/meta-webosose")
