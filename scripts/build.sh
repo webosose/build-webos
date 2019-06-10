@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.4"
+SCRIPT_VERSION="6.10.5"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -207,7 +207,7 @@ function generate_webos_bom {
   F=$3
 
   rm -f webos-bom.json
-  /usr/bin/time -f "$TIME_STR" bitbake -c write_bom ${I} 2>&1 | tee /dev/stderr | grep '^TIME:' >> ${BUILD_TIME_LOG}
+  /usr/bin/time -f "$TIME_STR" bitbake --runall=write_bom_data ${I} 2>&1 | tee /dev/stderr | grep '^TIME:' >> ${BUILD_TIME_LOG}
   [ -d ${ARTIFACTS}/${MACHINE}/${I} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/${I}
   sort webos-bom.json > ${ARTIFACTS}/${MACHINE}/${I}/${F}
   rm -f webos-bom.json
@@ -216,7 +216,7 @@ function generate_webos_bom {
 function filter_images {
   FILTERED_IMAGES=""
   # remove images which aren't available for some MACHINEs
-  # no restriction in webos-pro
+  # no restriction in webos
   FILTERED_IMAGES="${IMAGES}"
   if [ -n "${IMAGES}" -a -z "${FILTERED_IMAGES}" ] ; then
     echo "ERROR: All images were filtered for MACHINE: '${MACHINE}', IMAGES: '${IMAGES}'"
