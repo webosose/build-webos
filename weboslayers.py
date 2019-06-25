@@ -60,7 +60,6 @@ Machines = ['raspberrypi3','qemux86']
 webos_layers = [
 ('bitbake',                   -1, 'git://github.com/openembedded/bitbake.git',              'branch=1.40,commit=4ce92f43', ''),
 
-('meta-gplv2',                 1, 'git://git.yoctoproject.org/meta-gplv2',                  'branch=thud,commit=aabc30f', ''),
 ('meta',                       5, 'git://github.com/openembedded/openembedded-core.git',    'branch=thud,commit=f162d5bfe6', 'oe-core'),
 
 ('meta-oe',                   10, 'git://github.com/openembedded/meta-openembedded.git',    'branch=thud,commit=9b3b907f30', 'meta-oe'),
