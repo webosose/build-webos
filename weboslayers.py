@@ -75,7 +75,7 @@ webos_layers = [
 
 ('meta-ros',                  38, 'git://github.com/ros/meta-ros.git',                      'branch=legacy,commit=f1a2de5a',''),
 
-('meta-webos',                40, 'git://github.com/webosose/meta-webosose.git',            'branch=master,commit=c10ced1', ''),
+('meta-webos',                40, 'git://github.com/webosose/meta-webosose.git',            'branch=master,commit=e214c69', ''),
 
 ('meta-raspberrypi',          50, 'git://git.yoctoproject.org/meta-raspberrypi',            'branch=thud,commit=89bdf97', ''),
 ('meta-webos-raspberrypi',    51, 'git://github.com/webosose/meta-webosose.git',            '', ''),
