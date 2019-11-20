@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.5a"
+SCRIPT_VERSION="6.10.6"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -310,7 +310,7 @@ function add_buildhistory_artifacts {
       # manager.addInfoBadge("${manager.build.getWorkspace().child('BUILD-ARTIFACTS/build-id.txt').readToString()}")
       # in all builds (making BUILD_IMAGES/BUILD_MACHINE changes less error-prone)
       FIRST_IMAGE="${MACHINE}/${I}"
-      ln -vnf ${ARTIFACTS}/${BHMACHINE}/${I}/build-id.txt ${ARTIFACTS}/build-id.txt
+      ln -vnf ${ARTIFACTS}/${MACHINE}/${I}/build-id.txt ${ARTIFACTS}/build-id.txt
     fi
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/image-info.txt ${ARTIFACTS}/${MACHINE}/${I}/image-info.txt
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/files-in-image.txt ${ARTIFACTS}/${MACHINE}/${I}/files-in-image.txt
