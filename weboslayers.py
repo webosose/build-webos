@@ -58,9 +58,9 @@ Machines = ['qemux86', 'raspberrypi3', 'raspberrypi4']
 # github.com/openembedded repositories are read-only mirrors of the authoritative
 # repositories on git.openembedded.org
 webos_layers = [
-('bitbake',                   -1, 'git://github.com/openembedded/bitbake.git',              'branch=1.40,commit=97067634', ''),
+('bitbake',                   -1, 'git://github.com/openembedded/bitbake.git',              'branch=1.40,commit=b690030e', ''),
 
-('meta',                       5, 'git://github.com/openembedded/openembedded-core.git',    'branch=thud,commit=cd7cf933b3', 'oe-core'),
+('meta',                       5, 'git://github.com/openembedded/openembedded-core.git',    'branch=thud,commit=e68991ceb5', 'oe-core'),
 
 ('meta-oe',                   10, 'git://github.com/openembedded/meta-openembedded.git',    'branch=thud,commit=446bd615fd', 'meta-oe'),
 ('meta-multimedia',           11, 'git://github.com/openembedded/meta-openembedded.git',    '', 'meta-oe'),
@@ -68,12 +68,12 @@ webos_layers = [
 ('meta-python',               13, 'git://github.com/openembedded/meta-openembedded.git',    '', 'meta-oe'),
 ('meta-filesystems',          14, 'git://github.com/openembedded/meta-openembedded.git',    '', 'meta-oe'),
 
-('meta-updater',              15, 'git://github.com/advancedtelematic/meta-updater.git',    'branch=thud,commit=0b087a3', ''),
+('meta-updater',              15, 'git://github.com/advancedtelematic/meta-updater.git',    'branch=thud,commit=d61874d', ''),
 ('meta-virtualization',       16, 'git://git.yoctoproject.org/meta-virtualization',         'branch=thud,commit=7685c7d', ''),
 ('meta-qt5',                  20, 'git://github.com/meta-qt5/meta-qt5.git',                 'branch=warrior,commit=17187128', ''),
 
-('meta-webos-backports-2.7',  30, 'ssh://gpro.lge.com/webosose/meta-webosose',              '', ''),
-('meta-webos-backports-3.0',  31, 'ssh://gpro.lge.com/webosose/meta-webosose',              '', ''),
+('meta-webos-backports-2.7',  30, 'git://github.com/webosose/meta-webosose.git',            '', ''),
+('meta-webos-backports-3.0',  31, 'git://github.com/webosose/meta-webosose.git',            '', ''),
 
 ('meta-webos',                40, 'git://github.com/webosose/meta-webosose.git',            'branch=master,commit=74b18afb0', ''),
 
