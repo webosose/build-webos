@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# Copyright (c) 2008-2018 LG Electronics, Inc.
+# Copyright (c) 2008-2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 check_sanity=true
 usage="$0 [--help|-h] [--version|-V] [--force|-f]"
-version="2.2.3"
+version="2.2.4"
 statusfile="/etc/webos.prerequisites"
 
 for i ; do
@@ -145,21 +145,22 @@ archivers="\
     zip \
 "
 
+# openjdk-11-jdk and ant is needed to build and run localization-tool
+# software-properties-common is needed to add ppa for openjdk
 # gcc-multilib is needed to build 32bit version of pseudo
 # g++-multilib is needed to build and run 32bit mksnapshot of V8 (in chromium53)
 extras="\
     gcc-multilib \
     g++-multilib \
     time \
+    software-properties-common \
+    openjdk-11-jdk
 "
 
 # add ppa for openjdk
 java_version=`java -version 2>&1 | head -n 1 | cut -d\" -f 2 | cut -d\. -f 1`
-if [ -z $java_version ] || [ $java_version -lt 10 ]; then
-    add-apt-repository ppa:openjdk-r/ppa
-    extras="${extras} openjdk-11-jdk"
-fi
 
+add-apt-repository ppa:openjdk-r/ppa --yes
 apt-get update
 
 apt-get install --yes \
