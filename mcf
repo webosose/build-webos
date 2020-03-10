@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2008-2017 LG Electronics, Inc.
+# Copyright (c) 2008-2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ def enable_trace():
     TRACE = True
 
 def enable_clean():
-    logger.warn('Running in clean non-interactive mode, all possible local changes and untracked files will be removed')
+    logger.warning('Running in clean non-interactive mode, all possible local changes and untracked files will be removed')
     global CLEAN
     CLEAN = True
 
@@ -247,16 +247,16 @@ def _icecc_installed():
              if '1.0.1-1' == iceversion:
                  return True
              else:
-                 logger.warn("WARNING: Wrong icecc package version {} is installed, disabling build from using ICECC.\n".format(iceversion) + \
+                 logger.warning("WARNING: Wrong icecc package version {} is installed, disabling build from using ICECC.\n".format(iceversion) + \
                              "Please check 'How To Install ICECC on Your Workstation (Client)'\n" + \
                              "http://wiki.lgsvl.com/pages/viewpage.action?pageId=96175316")
                  return False
         else:
-             logger.warn('WARNING: ICECC package installation check failed, disabling build from using ICECC.')
+             logger.warning('WARNING: ICECC package installation check failed, disabling build from using ICECC.')
              return False
 
     except:
-        logger.warn('WARNING: ICECC package installation check failed, disabling build from using ICECC.')
+        logger.warning('WARNING: ICECC package installation check failed, disabling build from using ICECC.')
         return False
 
 def location_to_dirname(location):
@@ -535,7 +535,7 @@ def reposanitycheck(layer):
     if CLEAN:
         if echo_check_call("git status --porcelain -s"):
             layer["sanity_uncommitted_clean"] = True
-            logger.warn('Removing all local changes and untracked files in [%s]' % layer["location"])
+            logger.warning('Removing all local changes and untracked files in [%s]' % layer["location"])
             # abort rebase if git pull --rebase from update_layers got stuck on some local commit
             try:
                 echo_check_call("git rebase --abort 2>/dev/null")
@@ -549,13 +549,13 @@ def reposanitycheck(layer):
     else:
         logger.info('Checking for local changes in [%s]' % layer["location"])
         if echo_check_call("git status --porcelain --u=no -s"):
-            logger.warn('Found local uncommitted changes in [%s]' % layer["location"])
+            logger.warning('Found local uncommitted changes in [%s]' % layer["location"])
             layer["sanity_uncommitted_changes"] = True
             echo_check_call("git stash")
             res = True
 
         if echo_check_call("git status --porcelain -s | grep -v '^?? MCF-PATCHES_' || true"):
-            logger.warn('Found local untracked changes in [%s]' % layer["location"])
+            logger.warning('Found local untracked changes in [%s]' % layer["location"])
             layer["sanity_untracked_changes"] = True
             res = True
 
@@ -580,7 +580,7 @@ def reposanitycheck(layer):
     logger.debug("reposanitycheck(%s) dir %s, branchinfo %s, branchinfonew %s, url %s, urlnew %s" % (layer["name"], layer["location"], layer["branch_current"], layer["branch_new"], layer["url"], urlcurrent))
 
     if urlcurrent != layer["url"]:
-        logger.warn("Changing url for remote '%s' from '%s' to '%s'" % (REMOTE, urlcurrent, layer["url"]))
+        logger.warning("Changing url for remote '%s' from '%s' to '%s'" % (REMOTE, urlcurrent, layer["url"]))
         echo_check_call("git remote set-url %s %s" % (REMOTE, layer["url"]))
         # Sync with new remote repo
         try:
@@ -642,7 +642,7 @@ def reposanitycheck(layer):
             trackingremote = trackingremote.strip()
 
             if not trackingbranch or not trackingremote or trackingbranch.replace('refs/heads',trackingremote) != remotebranch:
-                logger.warn("checkout %s was tracking '%s/%s' changing it to track '%s'" % (layer["location"], trackingremote, trackingbranch, remotebranch))
+                logger.warning("checkout %s was tracking '%s/%s' changing it to track '%s'" % (layer["location"], trackingremote, trackingbranch, remotebranch))
                 # to ensure we are tracking remote
                 echo_check_call('git branch %s --set-upstream-to %s' % (newbranch, remotebranch))
 
@@ -781,9 +781,9 @@ def checkmirror(name, url):
     if url.startswith('file://'):
         pathstr = url[7:]
         if not os.path.isdir(pathstr):
-            logger.warn("%s parameter '%s' points to non-existent directory" % (name, url))
+            logger.warning("%s parameter '%s' points to non-existent directory" % (name, url))
         elif not os.listdir(pathstr):
-            logger.warn("%s parameter '%s' points to empty directory, did you forgot to mount it?" % (name, url))
+            logger.warning("%s parameter '%s' points to empty directory, did you forgot to mount it?" % (name, url))
     elif len(url) <= 7:
         logger.error("%s parameter '%s' is incorrect, we expect at least 7 characters for protocol" % (name, url))
 
@@ -795,7 +795,7 @@ def sanitycheck(options):
         mirror = ''
         pass
     if not mirror:
-        logger.warn('No mirror for github.com was detected, please define mirrors in ~/.gitconfig if some are available')
+        logger.warning('No mirror for github.com was detected, please define mirrors in ~/.gitconfig if some are available')
     if options.sstatemirror:
         for m in options.sstatemirror:
             if not m:
