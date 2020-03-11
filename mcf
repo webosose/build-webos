@@ -25,7 +25,7 @@ from time import gmtime, strftime, sleep
 import shutil
 import glob
 
-__version__ = "6.2.3"
+__version__ = "6.2.4"
 
 logger = logging.getLogger(__name__)
 
@@ -371,7 +371,10 @@ def downloadrepo(layer):
             else:
                 # we don't have any branch preference use detached
                 cmd ='git checkout FETCH_HEAD'
-            echo_check_call(cmd)
+            try:
+                echo_check_call(cmd)
+            except subprocess.CalledProcessError:
+                raise Exception('Failed to fetch %s repo' % layer["location"])
         else:
             if not contains_ref(newcommitid):
                 wait_for_git_mirror(newcommitid)
@@ -384,7 +387,10 @@ def downloadrepo(layer):
             else:
                 # we don't have any branch preference use detached
                 cmd ='git checkout %s' % newcommitid
-            echo_check_call(cmd)
+            try:
+                echo_check_call(cmd)
+            except subprocess.CalledProcessError:
+                raise Exception('Failed to fetch %s repo' % layer["location"])
 
     newtag = layer["tag_new"]
     if newtag:
@@ -396,7 +402,10 @@ def downloadrepo(layer):
             cmd ='git reset --hard %s' % newtag
         else:
             cmd ='git checkout %s' % newtag
-        echo_check_call(cmd)
+        try:
+            echo_check_call(cmd)
+        except subprocess.CalledProcessError:
+            raise Exception('Failed to fetch %s repo' % layer["location"])
 
     os.chdir(olddir)
 
@@ -509,7 +518,7 @@ def printupdatesummary ():
     if not found:
         logger.info('No local changes found')
 
-def get_remote_branch(newbranch, second_call = False):
+def get_remote_branch(newbranch, layer, second_call = False):
     remotebranch = None
     refbranchlist = echo_check_call("git branch -r")
     refbranch = refbranchlist.splitlines()
@@ -521,8 +530,11 @@ def get_remote_branch(newbranch, second_call = False):
         return remotebranch
     else:
         # try it again after "git remote update"
-        echo_check_call("git remote update")
-        return get_remote_branch(newbranch, True)
+        try:
+            echo_check_call("git remote update")
+        except subprocess.CalledProcessError:
+            raise Exception('Failed to fetch %s repo' % layer["location"])
+        return get_remote_branch(newbranch, layer, True)
 
 def reposanitycheck(layer):
     olddir = os.getcwd()
@@ -543,9 +555,12 @@ def reposanitycheck(layer):
                 # we can ignore this one
                 pass
 
-            echo_check_call("git stash clear")
-            echo_check_call("git clean -fdx")
-            echo_check_call("git reset --hard")
+            try:
+                echo_check_call("git stash clear")
+                echo_check_call("git clean -fdx")
+                echo_check_call("git reset --hard")
+            except subprocess.CalledProcessError:
+                raise Exception('Failed to fetch %s repo' % layer["location"])
     else:
         logger.info('Checking for local changes in [%s]' % layer["location"])
         if echo_check_call("git status --porcelain --u=no -s"):
@@ -586,7 +601,7 @@ def reposanitycheck(layer):
         try:
             echo_check_call('git remote update')
         except subprocess.CalledProcessError:
-            raise Exception('Failed to fetch %s repo' % LOCATIONS[layer])
+            raise Exception('Failed to fetch %s repo' % layer["location"])
 
     newbranch = layer["branch_new"]
     if newbranch:
@@ -603,7 +618,7 @@ def reposanitycheck(layer):
                 needcheckout = False
                 break
 
-        remotebranch = get_remote_branch(newbranch)
+        remotebranch = get_remote_branch(newbranch, layer)
 
         if foundlocalbranch and remotebranch:
             if needcheckout:
@@ -692,7 +707,10 @@ def updaterepo(layer):
                 else:
                     # we don't have any branch preference use detached
                     cmd ='git checkout FETCH_HEAD'
-                echo_check_call(cmd)
+                try:
+                    echo_check_call(cmd)
+                except subprocess.CalledProcessError:
+                    raise Exception('Failed to fetch %s repo' % layer["location"])
             else:
                 if not contains_ref(newcommitid):
                     wait_for_git_mirror(newcommitid)
@@ -705,14 +723,23 @@ def updaterepo(layer):
                 else:
                     # we don't have any branch preference use detached
                     cmd ='git checkout %s' % newcommitid
-                echo_check_call(cmd)
+                try:
+                    echo_check_call(cmd)
+                except subprocess.CalledProcessError:
+                    raise Exception('Failed to fetch %s repo' % layer["location"])
         else:
             if CLEAN:
-                echo_check_call("git remote update")
-                echo_check_call('git reset --hard %s/%s' % (REMOTE, newbranch))
+                try:
+                    echo_check_call("git remote update")
+                    echo_check_call('git reset --hard %s/%s' % (REMOTE, newbranch))
+                except subprocess.CalledProcessError:
+                    raise Exception('Failed to fetch %s repo' % layer["location"])
             else:
                 # current branch always tracks a remote one
-                echo_check_call('git pull %s' % REMOTE)
+                try:
+                    echo_check_call('git pull %s' % REMOTE)
+                except subprocess.CalledProcessError:
+                    raise Exception('Failed to fetch %s repo' % layer["location"])
         logger.info('Done updating [%s]' % layer["location"])
     else:
         logger.info(('[%s] is up-to-date.' % layer["location"]))
