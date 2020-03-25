@@ -25,7 +25,7 @@ from time import gmtime, strftime, sleep
 import shutil
 import glob
 
-__version__ = "6.2.4"
+__version__ = "6.2.5"
 
 logger = logging.getLogger(__name__)
 
@@ -540,6 +540,8 @@ def reposanitycheck(layer):
     olddir = os.getcwd()
     os.chdir(layer["location"])
 
+    logger.info('Sanity checking [%s]' % layer["location"])
+
     layer["branch_current"] = echo_check_call("git rev-parse --abbrev-ref HEAD").rstrip()
 
     res = False
@@ -665,9 +667,9 @@ def reposanitycheck(layer):
             echo_check_call('git checkout -b %s %s' % (newbranch, remotebranch))
         else:
             # anything else is failure
-            raise Exception('Could not find local and remote branches for %s' % newbranch)
+            raise Exception('Could not find local and remote branch "%s" for layer "%s" from "%s"' % (newbranch, layer["location"], layer["url"]))
     else:
-            raise Exception('Undefined branch name')
+            raise Exception('Undefined branch name for layer "%s" from "%s"' % (layer["location"], layer["url"]))
 
     newdir = os.chdir(olddir)
     return res
