@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.7"
+SCRIPT_VERSION="6.10.8"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -240,6 +240,20 @@ function call_bitbake {
   RESULT+=${PIPESTATUS[0]}
 }
 
+
+function generate_oss_pkg_info {
+  MACHINE=$1
+  I=$2
+  F=$3
+
+  rm -f oss-pkg-info.yaml
+  . oe-init-build-env
+
+  /usr/bin/time -f "$TIME_STR" bitbake --runall=write_oss_pkg_info ${I} 2>&1 | tee /dev/stderr | grep '^TIME:' >> ${BUILD_TIME_LOG}
+  [ -d ${ARTIFACTS}/${MACHINE}/${I} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/${I}
+  ln oss-pkg-info.yaml ${ARTIFACTS}/${MACHINE}/${I}/${F}
+}
+
 function add_md5sums_and_buildhistory_artifacts {
   local I
   for I in ${FILTERED_IMAGES}; do
@@ -316,6 +330,7 @@ function add_buildhistory_artifacts {
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/image-info.txt ${ARTIFACTS}/${MACHINE}/${I}/image-info.txt
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/files-in-image.txt ${ARTIFACTS}/${MACHINE}/${I}/files-in-image.txt
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-packages.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-packages.txt
+    ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-names.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-package-names.txt
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-sizes.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-package-sizes.txt
     if [ -e buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-file-sizes.txt ] ; then
       ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-file-sizes.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-package-file-sizes.txt
@@ -661,6 +676,11 @@ else
   else
     for MACHINE in ${BMACHINES}; do
       call_bitbake
+      filter_images
+      for I in ${FILTERED_IMAGES} ${TARGETS}; do
+        print_timestamp "Generate oss package information"
+        generate_oss_pkg_info "${MACHINE}" "${I}" "oss-pkg-info.yaml"
+      done
       move_artifacts
     done
   fi
