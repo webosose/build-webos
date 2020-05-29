@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.8"
+SCRIPT_VERSION="6.10.9"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -201,6 +201,16 @@ function check_project_vars {
   echo "$ldesc"
 }
 
+function unset_buildhistory_commit {
+  [ -f webos-local.conf ] && sed -i '/BUILDHISTORY_COMMIT/d' webos-local.conf
+  echo "BUILDHISTORY_COMMIT = \"0\"" >> webos-local.conf
+}
+
+function set_buildhistory_commit {
+  [ -f webos-local.conf ] && sed -i '/BUILDHISTORY_COMMIT/d' webos-local.conf
+  echo "BUILDHISTORY_COMMIT = \"1\"" >> webos-local.conf
+}
+
 function generate_webos_bom {
   MACHINE=$1
   I=$2
@@ -208,6 +218,7 @@ function generate_webos_bom {
 
   rm -f webos-bom.json
   rm -f webos-bom-sort.json
+  unset_buildhistory_commit
   /usr/bin/time -f "$TIME_STR" bitbake --runall=write_bom_data ${I} 2>&1 | tee /dev/stderr | grep '^TIME:' >> ${BUILD_TIME_LOG}
   [ -d ${ARTIFACTS}/${MACHINE}/${I} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/${I}
   sort webos-bom.json > webos-bom-sort.json
@@ -226,6 +237,7 @@ function filter_images {
 
 function call_bitbake {
   filter_images
+  set_buildhistory_commit
   /usr/bin/time -f "$TIME_STR" bitbake ${BBFLAGS} ${FILTERED_IMAGES} ${TARGETS} 2>&1 | tee /dev/stderr | grep '^TIME:' >> ${BUILD_TIME_LOG}
 
   # Be aware that non-zero exit code from bitbake doesn't always mean that images weren't created.
@@ -249,6 +261,7 @@ function generate_oss_pkg_info {
   rm -f oss-pkg-info.yaml
   . oe-init-build-env
 
+  unset_buildhistory_commit
   /usr/bin/time -f "$TIME_STR" bitbake --runall=write_oss_pkg_info ${I} 2>&1 | tee /dev/stderr | grep '^TIME:' >> ${BUILD_TIME_LOG}
   [ -d ${ARTIFACTS}/${MACHINE}/${I} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/${I}
   ln oss-pkg-info.yaml ${ARTIFACTS}/${MACHINE}/${I}/${F}
