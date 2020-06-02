@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.9"
+SCRIPT_VERSION="6.10.10"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -252,21 +252,6 @@ function call_bitbake {
   RESULT+=${PIPESTATUS[0]}
 }
 
-
-function generate_oss_pkg_info {
-  MACHINE=$1
-  I=$2
-  F=$3
-
-  rm -f oss-pkg-info.yaml
-  . oe-init-build-env
-
-  unset_buildhistory_commit
-  /usr/bin/time -f "$TIME_STR" bitbake --runall=write_oss_pkg_info ${I} 2>&1 | tee /dev/stderr | grep '^TIME:' >> ${BUILD_TIME_LOG}
-  [ -d ${ARTIFACTS}/${MACHINE}/${I} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/${I}
-  ln oss-pkg-info.yaml ${ARTIFACTS}/${MACHINE}/${I}/${F}
-}
-
 function add_md5sums_and_buildhistory_artifacts {
   local I
   for I in ${FILTERED_IMAGES}; do
@@ -460,7 +445,7 @@ function move_artifacts {
       if ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.epk >/dev/null 2>/dev/null; then
         ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.epk ${ARTIFACTS}/${MACHINE}/${I}/
       fi
-    elif       BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.tar.bz2 >/dev/null 2>/dev/null \
+    elif ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.tar.bz2 >/dev/null 2>/dev/null \
       || ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.zip >/dev/null 2>/dev/null; then
       if ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.tar.bz2 >/dev/null 2>/dev/null; then
         ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.tar.bz2 ${ARTIFACTS}/${MACHINE}/${I}/
@@ -477,6 +462,12 @@ function move_artifacts {
       fi
     else
       echo "WARN: No ${I} images with recognized IMAGE_FSTYPES found to copy as build artifacts"
+    fi
+
+    if ls    BUILD/deploy/images/${MACHINE}/${I}-oss-pkg-info.yaml >/dev/null 2>/dev/null; then
+      ln -vn BUILD/deploy/images/${MACHINE}/${I}-oss-pkg-info.yaml ${ARTIFACTS}/${MACHINE}/${I}/oss-pkg-info.yaml
+    else
+      echo "WARN: No oss-pkg-info.yaml to copy as build artifacts"
     fi
 
     # delete possibly empty directories
@@ -689,11 +680,6 @@ else
   else
     for MACHINE in ${BMACHINES}; do
       call_bitbake
-      filter_images
-      for I in ${FILTERED_IMAGES} ${TARGETS}; do
-        print_timestamp "Generate oss package information"
-        generate_oss_pkg_info "${MACHINE}" "${I}" "oss-pkg-info.yaml"
-      done
       move_artifacts
     done
   fi
