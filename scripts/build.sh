@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2013-2020 LG Electronics, Inc.
+# Copyright (c) 2013-2021 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.10"
+SCRIPT_VERSION="6.10.11"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -468,6 +468,12 @@ function move_artifacts {
       ln -vn BUILD/deploy/images/${MACHINE}/${I}-oss-pkg-info.yaml ${ARTIFACTS}/${MACHINE}/${I}/oss-pkg-info.yaml
     else
       echo "WARN: No oss-pkg-info.yaml to copy as build artifacts"
+    fi
+
+    if ls    BUILD/deploy/images/${MACHINE}/${I}-dependency.json >/dev/null 2>/dev/null; then
+      ln -vn BUILD/deploy/images/${MACHINE}/${I}-dependency.json ${ARTIFACTS}/${MACHINE}/${I}/dependency.json
+    else
+      echo "WARN: No dependency.json to copy as build artifacts"
     fi
 
     # delete possibly empty directories
