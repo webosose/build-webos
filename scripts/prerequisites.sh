@@ -133,9 +133,10 @@ essential="\
     wget \
 "
 
-# add python3-distutils only for 18.04 (and later should be added for newer)
+# add python3-distutils only for 18.04 and later
 # because it doesn't exist as separate package in older Ubuntu releases
-[ `/usr/bin/lsb_release -s -r` = "18.04" ] && essential="${essential} python3-distutils"
+release_numerical=$(echo "$release" | tr -d .)
+[ -n "$release" ] && [ "$release_numerical" -ge "1804" ] &&  essential="${essential} python3-distutils"
 
 # bzip2, gzip, tar, zip are used by our scripts/build.sh
 archivers="\
