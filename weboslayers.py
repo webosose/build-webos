@@ -72,11 +72,11 @@ webos_layers = [
 ('meta-virtualization',       16, 'git://git.yoctoproject.org/meta-virtualization',         'branch=dunfell,commit=bf2930c', ''),
 ('meta-python2',              17, 'git://git.openembedded.org/meta-python2',                'branch=dunfell,commit=6b30007', ''),
 
-('meta-qt6',                  20, 'git://code.qt.io/yocto/meta-qt6.git',                    'branch=dev,commit=81da43f', ''),
+('meta-qt6',                  20, 'git://code.qt.io/yocto/meta-qt6.git',                    'branch=6.2,commit=9a4453a', ''),
 
 ('meta-webos-backports-3.2',  33, 'git://github.com/webosose/meta-webosose',                '', ''),
 
-('meta-webos',                40, 'git://github.com/webosose/meta-webosose.git',            'branch=master,commit=dc1a98fac', ''),
+('meta-webos',                40, 'git://github.com/webosose/meta-webosose.git',            'branch=master,commit=f02c93768', ''),
 
 ('meta-raspberrypi',          50, 'git://git.yoctoproject.org/meta-raspberrypi',            'branch=dunfell,commit=f0c7501', ''),
 ('meta-webos-raspberrypi',    51, 'git://github.com/webosose/meta-webosose.git',            '', ''),
