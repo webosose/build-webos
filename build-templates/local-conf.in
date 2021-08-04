@@ -265,7 +265,7 @@ BB_GENERATE_MIRROR_TARBALLS := "@generatemirrortarballs@"
 # CONF_VERSION is increased each time build/conf/ changes incompatibly and is used to
 # track the version of this file when it was generated. This can safely be ignored if
 # this doesn't mean anything to you.
-CONF_VERSION = "1"
+CONF_VERSION = "2"
 
 # local.conf.sample.extended starts here.
 # BBMASK is a regular expression that can be used to tell BitBake to ignore
