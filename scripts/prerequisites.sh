@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# Copyright (c) 2008-2020 LG Electronics, Inc.
+# Copyright (c) 2008-2021 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This has only been tested on Ubuntu-12.04 and Ubuntu-14.04 amd64.
+# This has only been tested on Ubuntu-16.04, Ubuntu-18.04 and Ubuntu-20.04 amd64.
 
 check_sanity=true
 usage="$0 [--help|-h] [--version|-V] [--force|-f]"
-version="2.2.4"
+version="2.2.5"
 statusfile="/etc/webos.prerequisites"
 
 for i ; do
@@ -62,9 +62,12 @@ fi
 sane=true
 
 distributor_id_sane="^Ubuntu$"
-release_sane="^14.04$|^16.04$|^18.04$"
-codename_sane="^trusty$|^xenial$|^bionic$"
+release_sane="^16.04$|^18.04$|^20.04$"
+codename_sane="^xenial$|^bionic$|^focal$"
 arch_sane="^amd64$"
+
+# Below packages shouled be installed before this script runs.
+apt-get install software-properties-common lsb-release -y
 
 case "${check_sanity}" in
     true)
@@ -133,9 +136,9 @@ essential="\
     wget \
 "
 
-# add python3-distutils only for 18.04 (and later should be added for newer)
+# add python3-distutils only for 18.04 and 20.04 (and later should be added for newer)
 # because it doesn't exist as separate package in older Ubuntu releases
-[ `/usr/bin/lsb_release -s -r` = "18.04" ] && essential="${essential} python3-distutils"
+[[ `/usr/bin/lsb_release -s -r` =~ ^18.04$|^20.04$ ]] && essential="${essential} python3-distutils"
 
 # bzip2, gzip, tar, zip are used by our scripts/build.sh
 archivers="\
@@ -153,7 +156,6 @@ extras="\
     gcc-multilib \
     g++-multilib \
     time \
-    software-properties-common \
     openjdk-11-jdk
 "
 
