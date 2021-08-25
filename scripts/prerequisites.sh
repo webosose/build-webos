@@ -18,7 +18,7 @@
 
 check_sanity=true
 usage="$0 [--help|-h] [--version|-V] [--force|-f]"
-version="2.2.6"
+version="2.2.7"
 statusfile="/etc/webos.prerequisites"
 
 for i ; do
@@ -152,14 +152,14 @@ archivers="\
 "
 
 # openjdk-11-jdk and ant is needed to build and run localization-tool
-# software-properties-common is needed to add ppa for openjdk
 # gcc-multilib is needed to build 32bit version of pseudo
 # g++-multilib is needed to build and run 32bit mksnapshot of V8 (in chromium53)
 extras="\
     gcc-multilib \
     g++-multilib \
     time \
-    openjdk-11-jdk
+    openjdk-11-jdk \
+    ant \
 "
 
 # add ppa for openjdk
