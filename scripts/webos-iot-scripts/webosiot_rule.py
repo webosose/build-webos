@@ -15,11 +15,11 @@
 # ('remove', 'meta-updater')
 #
 # 2. append 'meta-webos-iot' layer to weboslayers.py of webosose
-# ('append', ('meta-webos-iot', 'auto', 'git://github.com/webosose/meta-webos-iot.git', 'branch=webos-headless', 'meta-webos-iot')),
+# ('append', ('meta-webos-iot', 'auto', 'https://github.com/webosose/meta-webos-iot.git', 'branch=webos-headless', 'meta-webos-iot')),
 #
 # 3. insert 'meta-webos-iot' layer after 'meta-webos' layer of weboslayers.py of webosose
-# ('insert', 'meta-webos', ('meta-webos-iot', 41, 'git://github.com/webosose/meta-webos-iot.git', 'branch=webos-headless', 'meta-webos-iot')),
+# ('insert', 'meta-webos', ('meta-webos-iot', 41, 'https://github.com/webosose/meta-webos-iot.git', 'branch=webos-headless', 'meta-webos-iot')),
 
 webosiot_layer_rules = [
-('append', ('meta-webos-iot', 'auto', 'git://github.com/webosose/meta-webosose.git', '', '')),
+('append', ('meta-webos-iot', 'auto', 'https://github.com/webosose/meta-webosose.git', '', '')),
 ]
