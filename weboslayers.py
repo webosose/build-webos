@@ -53,7 +53,7 @@
 Distribution = "webos"
 
 # Supported MACHINE-s
-Machines = ['qemux86', 'qemuarm', 'raspberrypi3', 'raspberrypi3-64', 'raspberrypi4', 'raspberrypi4-64']
+Machines = ['qemux86', 'qemux86-64', 'qemuarm', 'raspberrypi3', 'raspberrypi3-64', 'raspberrypi4', 'raspberrypi4-64']
 
 # github.com/openembedded repositories are read-only mirrors of the authoritative
 # repositories on git.openembedded.org
