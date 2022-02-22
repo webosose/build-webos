@@ -400,14 +400,14 @@ CONF_VERSION = "2"
 # product. If shipped as part of an image these packages may have
 # implications so they are disabled by default.  To enable them,
 # un-comment the below as appropriate.
-#LICENSE_FLAGS_WHITELIST = "commercial_gst-fluendo-mp3 \
-#                           commercial_gst-openmax \
-#                           commercial_gst-plugins-ugly \
-#                           commercial_lame \
-#                           commercial_libmad \
-#                           commercial_libomxil \
-#                           commercial_mpeg2dec \
-#                           commercial_qmmp"
+#LICENSE_FLAGS_ACCEPTED = "commercial_gst-fluendo-mp3 \
+#                          commercial_gst-openmax \
+#                          commercial_gst-plugins-ugly \
+#                          commercial_lame \
+#                          commercial_libmad \
+#                          commercial_libomxil \
+#                          commercial_mpeg2dec \
+#                          commercial_qmmp"
 
 
 #
@@ -421,7 +421,7 @@ CONF_VERSION = "2"
 # "action,directory,minimum_space,minimum_free_inode"
 #
 # The "action" must be set and should be one of:
-# ABORT: Immediately abort
+# HALT: Immediately halt
 # STOPTASKS: The new tasks can't be executed any more, will stop the build
 #           when the running tasks have been done.
 # WARN: show warnings (see BB_DISKMON_WARNINTERVAL for more information)
