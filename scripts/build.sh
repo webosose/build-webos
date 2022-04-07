@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2013-2021 LG Electronics, Inc.
+# Copyright (c) 2013-2022 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.12"
+SCRIPT_VERSION="6.10.13"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -218,10 +218,20 @@ function generate_webos_bom {
 
   rm -f webos-bom.json
   rm -f webos-bom-sort.json
+  rm -f webos-compile-option.json
+  rm -f webos-common-compile-option.json
   unset_buildhistory_commit
   /usr/bin/time -f "$TIME_STR" bitbake --runall=write_bom_data ${I} 2>&1 | tee /dev/stderr | grep '^TIME:' >> ${BUILD_TIME_LOG}
   [ -d ${ARTIFACTS}/${MACHINE}/${I} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/${I}
   sort webos-bom.json > webos-bom-sort.json
+  sort webos-compile-option.json > webos-compile-option-sort.json
+  if [[ "${F}" =~ "before" ]]; then
+    sed -e '1s/^{/[{/' -e '$s/,$/]/' webos-compile-option-sort.json > ${ARTIFACTS}/${MACHINE}/${I}/webos-compile-option-before.json
+    cp webos-common-compile-option.json ${ARTIFACTS}/${MACHINE}/${I}/webos-common-compile-option-before.json
+  elif [[ "${F}" =~ "after" ]]; then
+    sed -e '1s/^{/[{/' -e '$s/,$/]/' webos-compile-option-sort.json > ${ARTIFACTS}/${MACHINE}/${I}/webos-compile-option-after.json
+    cp webos-common-compile-option.json ${ARTIFACTS}/${MACHINE}/${I}/webos-common-compile-option-after.json
+  fi
   sed -e '1s/^{/[{/' -e '$s/,$/]/' webos-bom-sort.json > ${ARTIFACTS}/${MACHINE}/${I}/${F}
 }
 
