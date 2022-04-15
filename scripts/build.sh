@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.13"
+SCRIPT_VERSION="6.10.14"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -219,6 +219,7 @@ function generate_webos_bom {
   rm -f webos-bom.json
   rm -f webos-bom-sort.json
   rm -f webos-compile-option.json
+  rm -f webos-compile-option-sort.json
   rm -f webos-common-compile-option.json
   unset_buildhistory_commit
   /usr/bin/time -f "$TIME_STR" bitbake --runall=write_bom_data ${I} 2>&1 | tee /dev/stderr | grep '^TIME:' >> ${BUILD_TIME_LOG}
@@ -226,12 +227,12 @@ function generate_webos_bom {
   sort webos-bom.json > webos-bom-sort.json
   sort webos-compile-option.json > webos-compile-option-sort.json
   if [[ "${F}" =~ "before" ]]; then
-    sed -e '1s/^{/[{/' -e '$s/,$/]/' webos-compile-option-sort.json > ${ARTIFACTS}/${MACHINE}/${I}/webos-compile-option-before.json
-    cp webos-common-compile-option.json ${ARTIFACTS}/${MACHINE}/${I}/webos-common-compile-option-before.json
+    COMPILE_SUFFIX="-before"
   elif [[ "${F}" =~ "after" ]]; then
-    sed -e '1s/^{/[{/' -e '$s/,$/]/' webos-compile-option-sort.json > ${ARTIFACTS}/${MACHINE}/${I}/webos-compile-option-after.json
-    cp webos-common-compile-option.json ${ARTIFACTS}/${MACHINE}/${I}/webos-common-compile-option-after.json
+    COMPILE_SUFFIX="-after"
   fi
+  sed -e '1s/^{/[{/' -e '$s/,$/]/' webos-compile-option-sort.json > ${ARTIFACTS}/${MACHINE}/${I}/webos-compile-option${COMPILE_SUFFIX}.json
+  cp webos-common-compile-option.json ${ARTIFACTS}/${MACHINE}/${I}/webos-common-compile-option${COMPILE_SUFFIX}.json
   sed -e '1s/^{/[{/' -e '$s/,$/]/' webos-bom-sort.json > ${ARTIFACTS}/${MACHINE}/${I}/${F}
 }
 
@@ -644,6 +645,9 @@ if [ -n "${CREATE_BOM}" -a -n "${BMACHINES}" ]; then
         diff ${ARTIFACTS}/${MACHINE}/${I}/webos-bom-before.json \
              ${ARTIFACTS}/${MACHINE}/${I}/webos-bom-after.json \
            > ${ARTIFACTS}/${MACHINE}/${I}/webos-bom-diff.txt
+        diff ${ARTIFACTS}/${MACHINE}/${I}/webos-compile-option-before.json \
+             ${ARTIFACTS}/${MACHINE}/${I}/webos-compile-option-after.json \
+           > ${ARTIFACTS}/${MACHINE}/${I}/webos-compile-option-diff.txt
       done
     done
   fi
