@@ -71,14 +71,14 @@ webos_layers = [
 ('meta-updater',              15, 'https://github.com/uptane/meta-updater.git',             'branch=dunfell,commit=eba4b74', ''),
 ('meta-virtualization',       16, 'https://git.yoctoproject.org/git/meta-virtualization',   'branch=dunfell,commit=f6b88c1', ''),
 
-('meta-qt6',                  20, 'https://code.qt.io/yocto/meta-qt6.git',                  'branch=6.3.0,commit=f7c9337', ''),
+('meta-qt6',                  20, 'https://code.qt.io/yocto/meta-qt6.git',                  'branch=6.3.1,commit=39eeba2', ''),
 
 ('meta-webos-backports-3.2',  33, 'https://github.com/webosose/meta-webosose',              '', ''),
 ('meta-webos-backports-3.3',  34, 'https://github.com/webosose/meta-webosose',              '', ''),
 ('meta-webos-backports-3.4',  35, 'https://github.com/webosose/meta-webosose',              '', ''),
 ('meta-webos-backports-4.0',  36, 'https://github.com/webosose/meta-webosose',              '', ''),
 
-('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=8428a661c', ''),
+('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=dc6f172e8', ''),
 
 ('meta-raspberrypi',          50, 'https://github.com/agherzan/meta-raspberrypi.git',       'branch=dunfell,commit=934064a', ''),
 ('meta-webos-raspberrypi',    51, 'https://github.com/webosose/meta-webosose.git',          '', ''),
