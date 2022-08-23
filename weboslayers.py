@@ -78,7 +78,7 @@ webos_layers = [
 ('meta-webos-backports-3.4',  35, 'https://github.com/webosose/meta-webosose',              '', ''),
 ('meta-webos-backports-4.0',  36, 'https://github.com/webosose/meta-webosose',              '', ''),
 
-('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=0706f6ea12', ''),
+('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=7235fc5b4c', ''),
 
 ('meta-raspberrypi',          50, 'https://github.com/agherzan/meta-raspberrypi.git',       'branch=dunfell,commit=2081e1b', ''),
 ('meta-webos-raspberrypi',    51, 'https://github.com/webosose/meta-webosose.git',          '', ''),
