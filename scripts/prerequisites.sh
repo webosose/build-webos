@@ -18,7 +18,7 @@
 
 check_sanity=true
 usage="$0 [--help|-h] [--version|-V] [--force|-f]"
-version="2.2.8"
+version="2.2.9"
 statusfile="/etc/webos.prerequisites"
 
 for i ; do
@@ -62,8 +62,8 @@ fi
 sane=true
 
 distributor_id_sane="^Ubuntu$"
-release_sane="^16.04$|^18.04$|^20.04$"
-codename_sane="^xenial$|^bionic$|^focal$"
+release_sane="^18.04$|^20.04$|^22.04$"
+codename_sane="^bionic$|^focal$|^jammy$"
 arch_sane="^amd64$"
 
 # Below packages shouled be installed before this script runs.
