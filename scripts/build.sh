@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.15"
+SCRIPT_VERSION="6.10.16"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -315,8 +315,8 @@ function add_buildhistory_artifacts {
         cp -a $d/${I} ${ARTIFACTS}/${SDKMACHINE}/${MACHINE}/
       done
     else
-      for d in buildhistory/sdk/*; do
-        mkdir -p ${ARTIFACTS}/${MACHINE}/
+      for d in buildhistory/sdk/${I}-*-${BHMACHINE}; do
+        [ -d ${ARTIFACTS}/${MACHINE} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/
         cp -a $d/${I} ${ARTIFACTS}/${MACHINE}/
       done
     fi
@@ -375,6 +375,9 @@ function move_kernel_image_and_add_symlinks {
 }
 
 function move_artifacts {
+  # XXX Might there be other subdirectories under BUILD/deploy that weren't created by this build?
+  # Some MACHINEs like raspberrypi4-64 now contain dash which gets converted to underscore for MACHINE_ARCH
+  BHMACHINE=`echo ${MACHINE} | sed 's/-/_/g'`
   for I in ${FILTERED_IMAGES}; do
     mkdir -p "${ARTIFACTS}/${MACHINE}/${I}" || true
     # we store only tar.gz, vmdk.zip and .epk images
@@ -473,13 +476,12 @@ function move_artifacts {
       if ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.zip >/dev/null 2>/dev/null; then
         ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.zip ${ARTIFACTS}/${MACHINE}/${I}/
       fi
-    elif ls BUILD/deploy/sdk/${I}-*.sh >/dev/null 2>/dev/null; then
-      if [ -n "${SDKMACHINE}" ] ; then
-        [ -d ${ARTIFACTS}/${SDKMACHINE} ] || mkdir -p ${ARTIFACTS}/${SDKMACHINE}
-        ln -vn BUILD/deploy/sdk/${I}-*.sh ${ARTIFACTS}/${SDKMACHINE}/
-      else
-        ln -vn BUILD/deploy/sdk/${I}-*.sh ${ARTIFACTS}/${MACHINE}/${I}/
-      fi
+    elif ls BUILD/deploy/sdk/${I}-*-${SDKMACHINE}-*.sh >/dev/null 2>/dev/null; then
+      [ -d ${ARTIFACTS}/${SDKMACHINE} ] || mkdir -p ${ARTIFACTS}/${SDKMACHINE}
+      ln -vn BUILD/deploy/sdk/${I}-*-${SDKMACHINE}-*.sh ${ARTIFACTS}/${SDKMACHINE}/
+    elif ls BUILD/deploy/sdk/${I}-*-${BHMACHINE}-*.sh >/dev/null 2>/dev/null; then
+      [ -d ${ARTIFACTS}/${MACHINE}/${I} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/${I}
+      ln -vn BUILD/deploy/sdk/${I}-*-${BHMACHINE}-*.sh ${ARTIFACTS}/${MACHINE}/${I}/
     else
       echo "WARN: No ${I} images with recognized IMAGE_FSTYPES found to copy as build artifacts"
     fi
