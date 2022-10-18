@@ -73,6 +73,9 @@ webos_layers = [
 
 ('meta-qt6',                  20, 'https://code.qt.io/yocto/meta-qt6.git',                  'branch=6.3.1,commit=39eeba2', ''),
 
+('meta-webos-backports-4.1',  30, 'https://github.com/webosose/meta-webosose',             '', ''),
+('meta-webos-backports-4.2',  31, 'https://github.com/webosose/meta-webosose',             '', ''),
+
 ('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=2df1674e', ''),
 
 ('meta-raspberrypi',          50, 'https://github.com/agherzan/meta-raspberrypi.git',       'branch=kirkstone,commit=dacad93', ''),
