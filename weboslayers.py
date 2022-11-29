@@ -74,8 +74,8 @@ webos_layers = [
 
 ('meta-qt6',                  20, 'https://code.qt.io/yocto/meta-qt6.git',                  'branch=6.4.0,commit=8370a30', ''),
 
-('meta-webos-backports-4.1',  30, 'https://github.com/webosose/meta-webosose',             '', ''),
-('meta-webos-backports-4.2',  31, 'https://github.com/webosose/meta-webosose',             '', ''),
+('meta-webos-backports-4.1',  30, 'https://github.com/webosose/meta-webosose.git',          '', ''),
+('meta-webos-backports-4.2',  31, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 
 ('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=062a3071b', ''),
 
