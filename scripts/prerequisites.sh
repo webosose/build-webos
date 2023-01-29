@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# Copyright (c) 2008-2021 LG Electronics, Inc.
+# Copyright (c) 2008-2023 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -147,31 +147,20 @@ archivers="\
     zip \
 "
 
-# openjdk-11-jdk and ant is needed to build and run localization-tool
 # gcc-multilib is needed to build 32bit version of pseudo
 # g++-multilib is needed to build and run 32bit mksnapshot of V8 (in chromium53)
 extras="\
     gcc-multilib \
     g++-multilib \
     time \
-    openjdk-11-jdk \
-    ant \
 "
 
-# add ppa for openjdk
-java_version=`java -version 2>&1 | head -n 1 | cut -d\" -f 2 | cut -d\. -f 1`
-
-add-apt-repository ppa:openjdk-r/ppa --yes
 apt-get update
 
 apt-get install --yes \
     ${essential} \
     ${extras} \
     ${archivers} \
-
-if [ -z $java_version ] || [ $java_version -lt 10 ]; then
-    update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-fi
 
 locale-gen en_US.utf8
 
