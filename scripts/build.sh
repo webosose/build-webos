@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.16"
+SCRIPT_VERSION="6.10.17"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -599,7 +599,7 @@ fi
 # Generate BOM files with metadata checked out by mcf (pinned versions)
 if [ -n "${CREATE_BOM}" -a -n "${BMACHINES}" ]; then
   print_timestamp "before first bom"
-  if [ "${BUILD_JOB}" = "verf" -o "${BUILD_JOB}" = "mlverf" -o "${BUILD_JOB}" = "integ" -o "${BUILD_JOB}" = "engr" -o "${BUILD_JOB}" = "clean" ] ; then
+  if [ "${BUILD_JOB}" = "verf" -o "${BUILD_JOB}" = "mlverf" -o "${BUILD_JOB}" = "integr" -o "${BUILD_JOB}" = "engr" -o "${BUILD_JOB}" = "clean" ] ; then
     # don't use -before suffix for official builds, because they don't need -after and .diff because
     # there is no logic for using different revisions than weboslayers.py
     BOM_FILE_SUFFIX="-before"
@@ -615,7 +615,7 @@ fi
 
 print_timestamp "before verf/engr/clean logic"
 
-if [ "${BUILD_JOB}" = "verf" -o "${BUILD_JOB}" = "mlverf" -o "${BUILD_JOB}" = "integ" -o "${BUILD_JOB}" = "engr" ] ; then
+if [ "${BUILD_JOB}" = "verf" -o "${BUILD_JOB}" = "mlverf" -o "${BUILD_JOB}" = "integr" -o "${BUILD_JOB}" = "engr" ] ; then
   if [ "$GERRIT_PROJECT" != "${BUILD_REPO}" ] ; then
     set -e # checkout issues are critical for verification and engineering builds
     for project in "${BUILD_LAYERS[@]}" ; do
@@ -640,7 +640,7 @@ fi
 
 # Generate BOM files again, this time with metadata possibly different for engineering and verification builds
 if [ -n "${CREATE_BOM}" -a -n "${BMACHINES}" ]; then
-  if [ "${BUILD_JOB}" = "verf" -o "${BUILD_JOB}" = "mlverf" -o "${BUILD_JOB}" = "integ" -o "${BUILD_JOB}" = "engr" -o "${BUILD_JOB}" = "clean" ] ; then
+  if [ "${BUILD_JOB}" = "verf" -o "${BUILD_JOB}" = "mlverf" -o "${BUILD_JOB}" = "integr" -o "${BUILD_JOB}" = "engr" -o "${BUILD_JOB}" = "clean" ] ; then
     print_timestamp "before 2nd bom"
     . oe-init-build-env
     for MACHINE in ${BMACHINES}; do
