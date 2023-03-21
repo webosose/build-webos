@@ -23,6 +23,7 @@
 /BUILD-ARTIFACTS/
 /Makefile
 TAGS
+/bitbake-cookerdaemon.log
 /bitbake.lock
 /mcf.status
 /oe-init-build-env
