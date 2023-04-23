@@ -58,32 +58,31 @@ Machines = ['qemux86', 'qemux86-64', 'qemuarm', 'raspberrypi3', 'raspberrypi3-64
 # github.com/openembedded repositories are read-only mirrors of the authoritative
 # repositories on git.openembedded.org
 webos_layers = [
-('bitbake',                   -1, 'https://github.com/openembedded/bitbake.git',            'branch=2.2,commit=e477a9cb3', ''),
+('bitbake',                   -1, 'https://github.com/openembedded/bitbake.git',            'branch=2.4,commit=8d153f1da', ''),
 
-('meta',                       5, 'https://github.com/openembedded/openembedded-core.git',  'branch=langdale,commit=78211cda40', 'oe-core'),
+('meta',                       5, 'https://github.com/openembedded/openembedded-core.git',  'branch=mickledore,commit=23b5141400', 'oe-core'),
 
-('meta-oe',                   10, 'https://github.com/openembedded/meta-openembedded.git',  'branch=langdale,commit=cbbaa82238', 'meta-oe'),
+('meta-oe',                   10, 'https://github.com/openembedded/meta-openembedded.git',  'branch=mickledore,commit=8e1f0fa6bf', 'meta-oe'),
 ('meta-multimedia',           11, 'https://github.com/openembedded/meta-openembedded.git',  '', 'meta-oe'),
 ('meta-networking',           12, 'https://github.com/openembedded/meta-openembedded.git',  '', 'meta-oe'),
 ('meta-python',               13, 'https://github.com/openembedded/meta-openembedded.git',  '', 'meta-oe'),
 ('meta-filesystems',          14, 'https://github.com/openembedded/meta-openembedded.git',  '', 'meta-oe'),
 
-('meta-clang',                15, 'https://github.com/kraj/meta-clang.git',                 'branch=langdale,commit=5a7a333', ''),
-('meta-virtualization',       16, 'https://git.yoctoproject.org/git/meta-virtualization',   'branch=langdale,commit=d1cbc4c9', ''),
+('meta-clang',                15, 'https://github.com/kraj/meta-clang.git',                 'branch=mickledore,commit=8bceec8', ''),
+('meta-virtualization',       16, 'https://git.yoctoproject.org/git/meta-virtualization',   'branch=mickledore,commit=b8db7002', ''),
 
 ('meta-qt6',                  20, 'https://code.qt.io/yocto/meta-qt6.git',                  'branch=6.8.1,commit=v6.8.1', ''),
 
-('meta-webos-backports-4.2',  31, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 ('meta-webos-backports-4.3',  32, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 ('meta-webos-backports-5.0',  33, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 ('meta-webos-backports-5.1',  34, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 ('meta-webos-backports-5.2',  35, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 
-('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=616c4fbf2e', ''),
+('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=37a94c40bf', ''),
 
-('meta-raspberrypi',          50, 'https://github.com/agherzan/meta-raspberrypi.git',       'branch=langdale,commit=8e3cbfa', ''),
+('meta-raspberrypi',          50, 'https://github.com/agherzan/meta-raspberrypi.git',       'branch=mickledore,commit=7a21646', ''),
 ('meta-webos-raspberrypi',    51, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 ('meta-webos-virtualization', 53, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 
-('meta-security',             76, 'https://git.yoctoproject.org/git/meta-security',         'branch=langdale,commit=a4562b1', ''),
+('meta-security',             76, 'https://git.yoctoproject.org/git/meta-security',         'branch=mickledore,commit=d7db0a3', ''),
 ]
