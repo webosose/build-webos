@@ -75,6 +75,7 @@ webos_layers = [
 
 ('meta-webos-backports-4.1',  30, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 ('meta-webos-backports-4.2',  31, 'https://github.com/webosose/meta-webosose.git',          '', ''),
+('meta-webos-backports-4.3',  32, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 
 ('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=16fb5082', ''),
 
