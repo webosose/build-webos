@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.18"
+SCRIPT_VERSION="6.10.19"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -79,7 +79,19 @@ function print_timestamp {
   printf "TIME: ${SCRIPT_NAME}-${SCRIPT_VERSION} $1: ${BUILD_TIMESTAMP}, +${BUILD_TIMEDIFF}, +${BUILD_TIMEDIFF_START}, ${BUILD_TIMESTAMPH}\n" | tee -a ${BUILD_TIME_LOG}
 }
 
+function check_bitbake_processes {
+  DIR=$1
+  if ps aux | grep bitbake | grep ${DIR}; then
+    echo "ERROR: There are some bitbake processes already running in ${DIR} directory, refusing to start another build here"
+    last -n 30
+    ps aux | grep bitbake
+    exit 1
+  fi
+}
+
 print_timestamp "start"
+
+check_bitbake_processes ${BUILD_TOPDIR}
 
 declare -i RESULT=0
 
