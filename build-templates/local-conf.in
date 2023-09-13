@@ -153,7 +153,7 @@ PACKAGE_CLASSES ?= "package_ipk"
 # Supported values are i686 and x86_64
 #
 # Using ??= so that it can be overridden in webos-local.conf without having to
-# resort to using _forcevariable.
+# resort to using :forcevariable.
 SDKMACHINE ??= "${BUILD_ARCH}"
 
 #

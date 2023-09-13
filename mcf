@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2008-2020 LG Electronics, Inc.
+# Copyright (c) 2008-2023 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ from time import gmtime, strftime, sleep
 import shutil
 import glob
 
-__version__ = "6.2.5"
+__version__ = "6.2.6"
 
 logger = logging.getLogger(__name__)
 
@@ -460,7 +460,7 @@ def write_bblayers_conf(sourcedir):
 
         locations  += "%s_LAYER ?= \"%s/%s\"\n" % (layer_name, topdir, layer["collection_path"])
         bblayers   += "    ${%s_LAYER} \\\n" % layer_name
-        priorities += "BBFILE_PRIORITY_%s_forcevariable = \"%s\"\n" % (layer["collection_name"], layer["priority"])
+        priorities += "BBFILE_PRIORITY_%s:forcevariable = \"%s\"\n" % (layer["collection_name"], layer["priority"])
 
     with open(os.path.join(sourcedir, "conf", "bblayers.conf"), 'a') as f:
         f.write('\n')
