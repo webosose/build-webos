@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2013-2022 LG Electronics, Inc.
+# Copyright (c) 2013-2023 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.17"
+SCRIPT_VERSION="6.10.18"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -661,6 +661,8 @@ fi
 print_timestamp "before signatures"
 
 if [ -n "${SIGNATURES}" -a -n "${BMACHINES}" ]; then
+  unset_buildhistory_commit
+
   . oe-init-build-env
   for MACHINE in ${BMACHINES}; do
     mkdir -p "${ARTIFACTS}/${MACHINE}" || true
