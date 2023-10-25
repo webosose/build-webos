@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.19"
+SCRIPT_VERSION="6.10.20"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -528,6 +528,8 @@ function move_artifacts {
     fi
   fi
 
+  [ -f warn.log ] && ln -vn warn.log ${ARTIFACTS}/warn.log
+
   move_kernel_image_and_add_symlinks
   add_md5sums_and_buildhistory_artifacts
 }
@@ -703,6 +705,11 @@ if [ -d "buildhistory/.git" -a -n "${BUILD_BUILDHISTORY_PUSH_REF}" ] ; then
 else
   [ -f webos-local.conf ] && sed "/^BUILDHISTORY_PUSH_REPO.*/d" -i webos-local.conf
   echo "INFO: buildhistory won't be pushed because buildhistory directory isn't git repo or BUILD_BUILDHISTORY_PUSH_REF wasn't set"
+fi
+
+if [ -f ${BUILD_TOPDIR}/oe-logging.json ] ; then
+  echo "INFO: enabling logger config from ${BUILD_TOPDIR}/oe-logging.json"
+  echo "BB_LOGCONFIG = \"\${TOPDIR}/oe-logging.json\"" >> webos-local.conf
 fi
 
 print_timestamp "before main '${JOB_NAME}' build"

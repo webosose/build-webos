@@ -1,0 +1,23 @@
+{
+    "version": 1,
+    "formatters": {
+        "warnlogFormatter": {
+            "()": "bb.msg.BBLogFormatter",
+            "format": "%(levelname)s: %(message)s"
+        }
+    },
+    "handlers": {
+        "warnlog": {
+            "class": "logging.FileHandler",
+            "formatter": "warnlogFormatter",
+            "level": "WARNING",
+            "filename": "warn.log"
+        }
+    },
+    "loggers": {
+        "BitBake": {
+            "handlers": ["warnlog"]
+        }
+    },
+    "@disable_existing_loggers": false
+}
