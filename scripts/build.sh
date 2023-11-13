@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.21"
+SCRIPT_VERSION="6.10.22"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -81,7 +81,7 @@ function print_timestamp {
 
 function check_bitbake_processes {
   DIR=$1
-  if ps aux | grep bitbake | grep ${DIR}; then
+  if ps aux | grep ..*bitbake | grep ${DIR}; then
     echo "ERROR: There are some bitbake processes already running in ${DIR} directory, refusing to start another build here"
     last -n 30
     ps aux | grep bitbake
