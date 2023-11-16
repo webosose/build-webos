@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.20"
+SCRIPT_VERSION="6.10.21"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -529,6 +529,7 @@ function move_artifacts {
   fi
 
   [ -f warn.log ] && ln -vn warn.log ${ARTIFACTS}/warn.log
+  [ -f ccache_stats.json ] && ln -vn ccache_stats.json ${ARTIFACTS}/ccache_stats.json
 
   move_kernel_image_and_add_symlinks
   add_md5sums_and_buildhistory_artifacts
@@ -718,6 +719,9 @@ FIRST_IMAGE=
 if [ -z "${BMACHINES}" ]; then
   echo "ERROR: calling build.sh without -M parameter"
 else
+  # remove old ccache_stats.json
+  rm -v ccache_stats.json
+
   . oe-init-build-env
   if [ -n "${BUILD_SDKMACHINES}" ] && echo "${IMAGES}" | grep -q "^[^- ]\+-bdk$" ; then
     # if there is only one image ending with "-bdk" and BUILD_SDKMACHINES is defined
