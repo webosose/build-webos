@@ -31,6 +31,8 @@ TAGS
 __pycache__/
 tmp/
 patches/
+/oe-logging.json
+/ccache_stats.json
 
 # Artifacts from generating build_changes.log
 build_changes.log
