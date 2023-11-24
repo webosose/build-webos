@@ -18,7 +18,7 @@
 
 check_sanity=true
 usage="$0 [--help|-h] [--version|-V] [--force|-f]"
-version="2.2.9"
+version="2.3.0"
 statusfile="/etc/webos.prerequisites"
 
 for i ; do
@@ -62,8 +62,8 @@ fi
 sane=true
 
 distributor_id_sane="^Ubuntu$"
-release_sane="^18.04$|^20.04$|^22.04$"
-codename_sane="^bionic$|^focal$|^jammy$"
+release_sane="^20.04$|^22.04$"
+codename_sane="^focal$|^jammy$"
 arch_sane="^amd64$"
 
 # Below packages shouled be installed before this script runs.
@@ -121,6 +121,7 @@ esac
 # locales, because utf8 is needed with newer bitbake which uses python3
 essential="\
     build-essential \
+    python3-distutils \
     chrpath \
     cpio \
     diffstat \
@@ -135,10 +136,6 @@ essential="\
     zstd \
 "
 
-# add python3-distutils only for 18.04 and 20.04 (and later should be added for newer)
-# because it doesn't exist as separate package in older Ubuntu releases
-[[ `/usr/bin/lsb_release -s -r` =~ ^18.04$|^20.04$ ]] && essential="${essential} python3-distutils"
-
 # bzip2, gzip, tar, zip are used by our scripts/build.sh
 archivers="\
     bzip2 \
@@ -149,6 +146,7 @@ archivers="\
 
 # gcc-multilib is needed to build 32bit version of pseudo
 # g++-multilib is needed to build and run 32bit mksnapshot of V8 (in chromium53)
+# time is used by scripts/build.sh
 extras="\
     gcc-multilib \
     g++-multilib \
