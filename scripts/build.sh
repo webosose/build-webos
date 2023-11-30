@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.10.23"
+SCRIPT_VERSION="6.10.24"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -508,6 +508,12 @@ function move_artifacts {
       ln -vn BUILD/deploy/images/${MACHINE}/${I}-dependency.json ${ARTIFACTS}/${MACHINE}/${I}/dependency.json
     else
       echo "WARN: No dependency.json to copy as build artifacts"
+    fi
+
+    if ls    BUILD/deploy/images/${MACHINE}/${I}-cve.json >/dev/null 2>/dev/null; then
+      ln -vn BUILD/deploy/images/${MACHINE}/${I}-cve.json ${ARTIFACTS}/${MACHINE}/${I}/cve.json
+    else
+      echo "WARN: No cve.json to copy as build artifacts"
     fi
 
     # delete possibly empty directories
