@@ -60,16 +60,16 @@ Machines = ['qemux86', 'qemux86-64', 'qemuarm', 'raspberrypi3', 'raspberrypi3-64
 webos_layers = [
 ('bitbake',                   -1, 'https://github.com/openembedded/bitbake.git',            'branch=2.0,commit=42a1c9fe6', ''),
 
-('meta',                       5, 'https://github.com/openembedded/openembedded-core.git',  'branch=kirkstone,commit=11da43b58e', 'oe-core'),
+('meta',                       5, 'https://github.com/openembedded/openembedded-core.git',  'branch=kirkstone,commit=eea685e1ca', 'oe-core'),
 
-('meta-oe',                   10, 'https://github.com/openembedded/meta-openembedded.git',  'branch=kirkstone,commit=8a75c61cce', 'meta-oe'),
+('meta-oe',                   10, 'https://github.com/openembedded/meta-openembedded.git',  'branch=kirkstone,commit=402affcc07', 'meta-oe'),
 ('meta-multimedia',           11, 'https://github.com/openembedded/meta-openembedded.git',  '', 'meta-oe'),
 ('meta-networking',           12, 'https://github.com/openembedded/meta-openembedded.git',  '', 'meta-oe'),
 ('meta-python',               13, 'https://github.com/openembedded/meta-openembedded.git',  '', 'meta-oe'),
 ('meta-filesystems',          14, 'https://github.com/openembedded/meta-openembedded.git',  '', 'meta-oe'),
 
-('meta-clang',                15, 'https://github.com/kraj/meta-clang.git',                 'branch=kirkstone,commit=79169d9', ''),
-('meta-virtualization',       17, 'https://git.yoctoproject.org/git/meta-virtualization',   'branch=kirkstone,commit=67b0ef42', ''),
+('meta-clang',                15, 'https://github.com/kraj/meta-clang.git',                 'branch=kirkstone,commit=1602c0a', ''),
+('meta-virtualization',       17, 'https://git.yoctoproject.org/git/meta-virtualization',   'branch=kirkstone,commit=88327090', ''),
 
 ('meta-qt6',                  20, 'https://code.qt.io/yocto/meta-qt6.git',                  'branch=6.6.0,commit=v6.6.0', ''),
 
