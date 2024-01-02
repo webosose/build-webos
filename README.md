@@ -33,7 +33,7 @@ $ bitbake webos-image
 
 Unless otherwise specified, all content, including all source code files and documentation files in this repository are:
 
-Copyright (c) 2008-2023 LG Electronics, Inc.
+Copyright (c) 2008-2024 LG Electronics, Inc.
 
 All content, including all source code files and documentation files in this repository except otherwise noted are: Licensed under the Apache License, Version 2.0 (the "License"); you may not use this content except in compliance with the License. You may obtain a copy of the License at
 
