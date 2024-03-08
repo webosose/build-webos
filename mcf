@@ -25,7 +25,7 @@ from time import gmtime, strftime, sleep
 import shutil
 import glob
 
-__version__ = "6.2.7"
+__version__ = "6.2.8"
 
 logger = logging.getLogger(__name__)
 
@@ -826,7 +826,7 @@ def checkmirror(name, url):
 
 def sanitycheck(options):
     try:
-        mirror = echo_check_call('git config -l | grep "^url\..*insteadof=github.com/"')
+        mirror = echo_check_call(r'git config -l | grep "^url\..*insteadof=github.com/"')
     except subprocess.CalledProcessError:
         # git config returns 1 when the option isn't set
         mirror = ''
