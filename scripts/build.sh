@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.11.1"
+SCRIPT_VERSION="6.11.2"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -103,6 +103,7 @@ OPTIONS:
   -T, --targets            Targets to build (unlike images they aren't copied from buildhistory)
   -M, --machines           Machines to build
   -b, --bom                Generate BOM files
+  -o, --only-bom           Generate webOS BOM only without image
   -s, --signatures         Dump sstate signatures, useful to compare why something is rebuilding
   -u, --scp-url            scp will use this path to download and update
                            \${URL}/latest_project_baselines.txt and also
@@ -546,7 +547,7 @@ function move_artifacts {
   add_md5sums_and_buildhistory_artifacts
 }
 
-TEMP=`getopt -o I:T:M:S:j:J:B:u:bshV --long images:,targets:,machines:,scp-url:,site:,jenkins:,job:,buildhistory-ref:,bom,signatures,help,version \
+TEMP=`getopt -o I:T:M:S:j:J:B:u:bshV --long images:,targets:,machines:,scp-url:,site:,jenkins:,job:,buildhistory-ref:,bom,only-bom,signatures,help,version \
      -n $(basename $0) -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 2 ; fi
@@ -565,6 +566,7 @@ while true ; do
     -B|--buildhistory-ref) BUILD_BUILDHISTORY_PUSH_REF="$2" ; shift 2 ;;
     -u|--scp-url) URL="$2" ; shift 2 ;;
     -b|--bom) CREATE_BOM="Y" ; shift ;;
+    -o|--only-bom) CREATE_BOM="O" ; shift ;;
     -s|--signatures) SIGNATURES="Y" ; shift ;;
     -h|--help) showusage ; shift ;;
     -V|--version) echo ${SCRIPT_NAME} ${SCRIPT_VERSION}; exit ;;
@@ -730,6 +732,10 @@ print_timestamp "before main '${JOB_NAME}' build"
 FIRST_IMAGE=
 if [ -z "${BMACHINES}" ]; then
   echo "ERROR: calling build.sh without -M parameter"
+elif [ "${CREATE_BOM}" = "O" -a -n "${BMACHINES}" ]; then
+  echo "[INFO] Generate webOS BOM only"
+  cd "${CALLDIR}"
+  exit 0;
 else
   # remove old ccache_stats.json
   rm -fv ccache_stats.json
