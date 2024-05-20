@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.11.2"
+SCRIPT_VERSION="6.11.3"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -520,6 +520,16 @@ function move_artifacts {
       ln -vn BUILD/deploy/images/${MACHINE}/${I}-cve.json ${ARTIFACTS}/${MACHINE}/${I}/cve.json
     else
       echo "WARN: No cve.json to copy as build artifacts"
+    fi
+
+    if ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.spdx.* >/dev/null 2>/dev/null; then
+      for SPDX in BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.spdx.*; do
+        if echo $SPDX | grep -q "${WEBOS_DISTRO_BUILD_ID}"; then
+          ln -vn $(readlink -f ${SPDX}) ${ARTIFACTS}/${MACHINE}/${I}/
+        fi
+      done
+    else
+      echo "WARN: No spdx files to copy as build artifacts"
     fi
 
     # delete possibly empty directories
