@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.11.7"
+SCRIPT_VERSION="6.11.8"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -227,6 +227,29 @@ function set_buildhistory_commit {
   fi
 }
 
+function copy_webos_bom {
+  MACHINE=$1
+  I=$2
+  F=$3
+  BASE_BOM=`git describe --always --match "builds/${BUILD_CODENAME}/*" | awk -F"-" '{print $1}' | awk -F"/" '{print $NF}'`
+  if ( echo "${BASE_BOM}" | grep -qE "^[0-9]+$" ); then
+    [ -d ${ARTIFACTS}/${MACHINE}/${I} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/${I}
+    echo "copy_webos_bom"
+
+    wget "http://webosimg.lge.com/images/${DISTRO}-${BUILD_CODENAME}-official-${MACHINE}/${BASE_BOM}/${MACHINE}/${I}/webos-bom.json" -O "${ARTIFACTS}/${MACHINE}/${I}/${F}"
+    if [ $? -ne 0 ]; then
+      echo "Failed to download ${F}"
+      return 1
+    fi
+    wget "http://webosimg.lge.com/images/${DISTRO}-${BUILD_CODENAME}-official-${MACHINE}/${BASE_BOM}/${MACHINE}/${I}/webos-bom-full.json" -O "${ARTIFACTS}/${MACHINE}/${I}/webos-bom-full-before.json"
+    wget "http://webosimg.lge.com/images/${DISTRO}-${BUILD_CODENAME}-official-${MACHINE}/${BASE_BOM}/${MACHINE}/${I}/webos-compile-option.json" -O "${ARTIFACTS}/${MACHINE}/${I}/webos-compile-option-before.json"
+    wget "http://webosimg.lge.com/images/${DISTRO}-${BUILD_CODENAME}-official-${MACHINE}/${BASE_BOM}/${MACHINE}/${I}/webos-common-compile-option.json" -O "${ARTIFACTS}/${MACHINE}/${I}/webos-common-compile-option-before.json"
+    ls "${ARTIFACTS}/${MACHINE}/${I}"
+  else
+    return 1
+  fi
+}
+
 function generate_webos_bom {
   MACHINE=$1
   I=$2
@@ -234,6 +257,8 @@ function generate_webos_bom {
 
   rm -f webos-bom.json
   rm -f webos-bom-sort.json
+  rm -f webos-bom-full.json
+  rm -f webos-bom-full-sort.json
   rm -f webos-compile-option.json
   rm -f webos-compile-option-sort.json
   rm -f webos-common-compile-option.json
@@ -241,6 +266,7 @@ function generate_webos_bom {
   /usr/bin/time -f "$TIME_STR" bitbake --runall=write_bom_data ${I} 2>&1 | tee /dev/stderr | grep '^TIME:' >> ${BUILD_TIME_LOG}
   [ -d ${ARTIFACTS}/${MACHINE}/${I} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/${I}
   sort webos-bom.json > webos-bom-sort.json
+  sort webos-bom-full.json > webos-bom-full-sort.json
   sort webos-compile-option.json > webos-compile-option-sort.json
   if [[ "${F}" =~ "before" ]]; then
     COMPILE_SUFFIX="-before"
@@ -249,6 +275,7 @@ function generate_webos_bom {
   fi
   sed -e '1s/^{/[{/' -e '$s/,$/]/' webos-compile-option-sort.json > ${ARTIFACTS}/${MACHINE}/${I}/webos-compile-option${COMPILE_SUFFIX}.json
   cp webos-common-compile-option.json ${ARTIFACTS}/${MACHINE}/${I}/webos-common-compile-option${COMPILE_SUFFIX}.json
+  sed -e '1s/^{/[{/' -e '$s/,$/]/' webos-bom-full-sort.json > ${ARTIFACTS}/${MACHINE}/${I}/webos-bom-full${COMPILE_SUFFIX}.json
   sed -e '1s/^{/[{/' -e '$s/,$/]/' webos-bom-sort.json > ${ARTIFACTS}/${MACHINE}/${I}/${F}
 }
 
@@ -570,7 +597,7 @@ function move_artifacts {
   add_md5sums_and_buildhistory_artifacts
 }
 
-TEMP=`getopt -o I:T:M:S:j:J:B:u:C:bshV --long images:,targets:,machines:,scp-url:,site:,jenkins:,job:,buildhistory-ref:,codename:,bom,only-bom,signatures,help,version \
+TEMP=`getopt -o I:T:M:S:j:J:B:u:C:bsohV --long images:,targets:,machines:,scp-url:,site:,jenkins:,job:,buildhistory-ref:,codename:,bom,only-bom,signatures,help,version \
      -n $(basename $0) -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 2 ; fi
@@ -660,6 +687,10 @@ if [ -n "${CREATE_BOM}" -a -n "${BMACHINES}" ]; then
   for MACHINE in ${BMACHINES}; do
     filter_images
     for I in ${FILTERED_IMAGES} ${TARGETS}; do
+      if [ "${BOM_FILE_SUFFIX}" = "-before" ] ; then
+        copy_webos_bom "${MACHINE}" "${I}" "webos-bom${BOM_FILE_SUFFIX}.json" && continue
+        echo "copy_webos_bom from webosimg.lge.com failed"
+      fi
       generate_webos_bom "${MACHINE}" "${I}" "webos-bom${BOM_FILE_SUFFIX}.json"
     done
   done
