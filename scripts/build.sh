@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.11.3"
+SCRIPT_VERSION="6.11.4"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -220,8 +220,10 @@ function unset_buildhistory_commit {
 }
 
 function set_buildhistory_commit {
-  [ -f webos-local.conf ] && sed -i '/BUILDHISTORY_COMMIT/d' webos-local.conf
-  echo "BUILDHISTORY_COMMIT = \"1\"" >> webos-local.conf
+  if [ -n "${BUILD_BUILDHISTORY_PUSH_REF}" ]; then
+    [ -f webos-local.conf ] && sed -i '/BUILDHISTORY_COMMIT/d' webos-local.conf
+    echo "BUILDHISTORY_COMMIT = \"1\"" >> webos-local.conf
+  fi
 }
 
 function generate_webos_bom {
