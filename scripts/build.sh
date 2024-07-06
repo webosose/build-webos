@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.11.4"
+SCRIPT_VERSION="6.11.5"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -532,6 +532,12 @@ function move_artifacts {
       done
     else
       echo "WARN: No spdx files to copy as build artifacts"
+    fi
+
+    if ls    BUILD/deploy/images/${MACHINE}/${I}-checksec.json >/dev/null 2>/dev/null; then
+      ln -vn BUILD/deploy/images/${MACHINE}/${I}-checksec.json ${ARTIFACTS}/${MACHINE}/${I}/checksec.json
+    else
+      echo "WARN: No checksec.json to copy as build artifacts"
     fi
 
     # delete possibly empty directories
