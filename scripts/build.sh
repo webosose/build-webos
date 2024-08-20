@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.11.5"
+SCRIPT_VERSION="6.11.6"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -402,16 +402,20 @@ function move_artifacts {
     mkdir -p "${ARTIFACTS}/${MACHINE}/${I}" || true
     # we store only tar.gz, vmdk.zip and .epk images
     # and we don't publish kernel images anymore
-    if ls BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk >/dev/null 2>/dev/null; then
-      if type zip >/dev/null 2>/dev/null; then
-        # zip vmdk images if they exists
-        find BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk -exec zip -j {}.zip {} \;
-        ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk.zip ${ARTIFACTS}/${MACHINE}/${I}/
-      else
-        # report failure and publish vmdk
-        echo "ERROR: ${SCRIPT_NAME}-${SCRIPT_VERSION} zip utility isn't installed on the build server" >&2
-        RESULT+=1
-        ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk ${ARTIFACTS}/${MACHINE}/${I}/
+    if ls BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk* >/dev/null 2>/dev/null; then
+      if ls BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk >/dev/null 2>/dev/null; then
+        if type zip >/dev/null 2>/dev/null; then
+          # zip vmdk images if they exists
+          find BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk -exec zip -j {}.zip {} \;
+          ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk.zip ${ARTIFACTS}/${MACHINE}/${I}/
+        else
+          # report failure and publish vmdk
+          echo "ERROR: ${SCRIPT_NAME}-${SCRIPT_VERSION} zip utility isn't installed on the build server" >&2
+          RESULT+=1
+          ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk ${ARTIFACTS}/${MACHINE}/${I}/
+        fi
+      elif ls BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk.gz >/dev/null 2>/dev/null; then
+        ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.vmdk.gz ${ARTIFACTS}/${MACHINE}/${I}/
       fi
       # copy webosvbox if we've built vmdk image
       if [ -e meta-webosose/meta-webos/scripts/webosvbox -a ! -e ${ARTIFACTS}/${MACHINE}/webosvbox ] ; then
