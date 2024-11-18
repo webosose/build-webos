@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.11.8"
+SCRIPT_VERSION="6.11.9"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -353,12 +353,14 @@ function add_buildhistory_artifacts {
   BHMACHINE=`echo ${MACHINE} | sed 's/-/_/g'`
   if ls buildhistory/sdk/*/${I} >/dev/null 2>/dev/null; then
     if [ -n "${SDKMACHINE}" ] ; then
-      for d in buildhistory/sdk/${I}-${SDKMACHINE}-*; do
-        [ -d ${ARTIFACTS}/${SDKMACHINE}/${MACHINE} ] || mkdir -p ${ARTIFACTS}/${SDKMACHINE}/${MACHINE}/
-        cp -a $d/${I} ${ARTIFACTS}/${SDKMACHINE}/${MACHINE}/
+      for MACHINE in ${BMACHINES}; do
+        for d in buildhistory/sdk/${DISTRO}-sdk-${I}-${SDKMACHINE}-*-${MACHINE}; do
+          [ -d ${ARTIFACTS}/${SDKMACHINE}/${MACHINE} ] || mkdir -p ${ARTIFACTS}/${SDKMACHINE}/${MACHINE}
+          cp -a $d/${I} ${ARTIFACTS}/${SDKMACHINE}/${MACHINE}/
+        done
       done
     else
-      for d in buildhistory/sdk/${I}-*-${BHMACHINE}; do
+      for d in buildhistory/sdk/${DISTRO}-sdk-${I}-*-${MACHINE}; do
         [ -d ${ARTIFACTS}/${MACHINE} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/
         cp -a $d/${I} ${ARTIFACTS}/${MACHINE}/
       done
@@ -380,18 +382,17 @@ function add_buildhistory_artifacts {
       ln -vnf ${ARTIFACTS}/${MACHINE}/${I}/build-id.txt ${ARTIFACTS}/build-id.txt
     fi
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/image-info.txt ${ARTIFACTS}/${MACHINE}/${I}/image-info.txt
-    ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/files-in-image.txt ${ARTIFACTS}/${MACHINE}/${I}/files-in-image.txt
+    ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/files-in-image* ${ARTIFACTS}/${MACHINE}/${I}/
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-packages.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-packages.txt
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-names.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-package-names.txt
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-sizes.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-package-sizes.txt
+    if [ -e buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-file-sizes.txt ] ; then
+      ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-file-sizes.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-package-file-sizes.txt
+    fi
     if [ -d buildhistory/images/${BHMACHINE}/glibc/${I}/ls2_api ] ; then
       cd buildhistory
       git diff HEAD~1 HEAD images/${BHMACHINE}/glibc/${I}/ls2_api > ${ARTIFACTS}/${MACHINE}/${I}/ls2_api_diff.txt
       cd -
-    fi
-
-    if [ -e buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-file-sizes.txt ] ; then
-      ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-file-sizes.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-package-file-sizes.txt
     fi
     if [ -f buildhistory/images/${BHMACHINE}/glibc/${I}/ls2_api_list.json ]; then
       ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/ls2_api_list.json ${ARTIFACTS}/${MACHINE}/${I}/ls2_api_list.json
@@ -528,12 +529,23 @@ function move_artifacts {
       if ls    BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.zip >/dev/null 2>/dev/null; then
         ln -vn BUILD/deploy/images/${MACHINE}/${I}-${MACHINE}-*.zip ${ARTIFACTS}/${MACHINE}/${I}/
       fi
-    elif ls BUILD/deploy/sdk/${I}-*-${SDKMACHINE}-*.sh >/dev/null 2>/dev/null; then
-      [ -d ${ARTIFACTS}/${SDKMACHINE} ] || mkdir -p ${ARTIFACTS}/${SDKMACHINE}
-      ln -vn BUILD/deploy/sdk/${I}-*-${SDKMACHINE}-*.sh ${ARTIFACTS}/${SDKMACHINE}/
-    elif ls BUILD/deploy/sdk/${I}-*-${BHMACHINE}-*.sh >/dev/null 2>/dev/null; then
-      [ -d ${ARTIFACTS}/${MACHINE}/${I} ] || mkdir -p ${ARTIFACTS}/${MACHINE}/${I}
-      ln -vn BUILD/deploy/sdk/${I}-*-${BHMACHINE}-*.sh ${ARTIFACTS}/${MACHINE}/${I}/
+    elif ls BUILD/deploy/sdk/${DISTRO}-sdk-${I}-*-${MACHINE}-*.sh >/dev/null 2>/dev/null; then
+      if [ -n "${SDKMACHINE}" ] ; then
+        for MACHINE in ${BMACHINES}; do
+          local DEST_DIR=${ARTIFACTS}/${SDKMACHINE}/${MACHINE}/${I}/
+          [ -d ${DEST_DIR} ] || mkdir -p ${DEST_DIR}
+          for ext in sh host.manifest target.manifest testdata.json; do
+            ln -vn BUILD/deploy/sdk/${DISTRO}-sdk-${I}-${SDKMACHINE}-*-${MACHINE}-*.${ext} ${DEST_DIR}
+          done
+          rmdir --ignore-fail-on-non-empty ${ARTIFACTS}/${MACHINE}/${I} ${ARTIFACTS}/${MACHINE}
+        done
+      else
+        local DEST_DIR=${ARTIFACTS}/${MACHINE}/${I}/
+        [ -d ${DEST_DIR} ] || mkdir -p ${DEST_DIR}
+        for ext in sh host.manifest target.manifest testdata.json; do
+          ln -vn BUILD/deploy/sdk/${DISTRO}-sdk-${I}-*-${MACHINE}-*.${ext} ${DEST_DIR}
+        done
+      fi
     else
       echo "WARN: No ${I} images with recognized IMAGE_FSTYPES found to copy as build artifacts"
     fi
