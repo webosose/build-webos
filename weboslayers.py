@@ -60,7 +60,7 @@ Machines = ['qemux86', 'qemux86-64', 'qemuarm', 'raspberrypi3', 'raspberrypi3-64
 webos_layers = [
 ('bitbake',                   -1, 'https://github.com/openembedded/bitbake.git',            'branch=2.0,commit=3f88b0052', ''),
 
-('meta',                       5, 'https://github.com/openembedded/openembedded-core.git',  'branch=kirkstone,commit=8c10f4a4dc', 'oe-core'),
+('meta',                       5, 'https://github.com/openembedded/openembedded-core.git',  'branch=kirkstone,commit=13b13b81b9', 'oe-core'),
 
 ('meta-oe',                   10, 'https://github.com/openembedded/meta-openembedded.git',  'branch=kirkstone,commit=4ad41baed6', 'meta-oe'),
 ('meta-multimedia',           11, 'https://github.com/openembedded/meta-openembedded.git',  '', 'meta-oe'),
@@ -80,7 +80,7 @@ webos_layers = [
 ('meta-webos-backports-5.1',  34, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 ('meta-webos-backports-5.2',  35, 'https://github.com/webosose/meta-webosose.git',          '', ''),
 
-('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=a27e864a6d', ''),
+('meta-webos',                40, 'https://github.com/webosose/meta-webosose.git',          'branch=master,commit=bfc54aeebd', ''),
 
 ('meta-raspberrypi',          50, 'https://github.com/agherzan/meta-raspberrypi.git',       'branch=kirkstone,commit=d7544f3', ''),
 ('meta-webos-raspberrypi',    51, 'https://github.com/webosose/meta-webosose.git',          '', ''),
