@@ -18,7 +18,7 @@
 #set -x
 
 # Some constants
-SCRIPT_VERSION="6.11.9"
+SCRIPT_VERSION="6.11.10"
 SCRIPT_NAME=`basename $0`
 AUTHORITATIVE_OFFICIAL_BUILD_SITE="rpt"
 
@@ -388,11 +388,6 @@ function add_buildhistory_artifacts {
     ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-sizes.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-package-sizes.txt
     if [ -e buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-file-sizes.txt ] ; then
       ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/installed-package-file-sizes.txt ${ARTIFACTS}/${MACHINE}/${I}/installed-package-file-sizes.txt
-    fi
-    if [ -d buildhistory/images/${BHMACHINE}/glibc/${I}/ls2_api ] ; then
-      cd buildhistory
-      git diff HEAD~1 HEAD images/${BHMACHINE}/glibc/${I}/ls2_api > ${ARTIFACTS}/${MACHINE}/${I}/ls2_api_diff.txt
-      cd -
     fi
     if [ -f buildhistory/images/${BHMACHINE}/glibc/${I}/ls2_api_list.json ]; then
       ln -vn buildhistory/images/${BHMACHINE}/glibc/${I}/ls2_api_list.json ${ARTIFACTS}/${MACHINE}/${I}/ls2_api_list.json
